@@ -1,0 +1,18 @@
+package pages
+
+import (
+	"github.com/jonasmh/recipetracker/pkg/models"
+)
+
+
+
+templ RecipesPage(recipes []models.Recipe) {
+	<div>
+		<h1>Recipes</h1>
+		<ul>
+			for _, recipe := range recipes {
+				<li>{ recipe.Title }</li>
+			}
+		</ul>
+	</div>
+}

@@ -52,6 +52,54 @@
           "store_path": "/nix/store/g29rrn8qqlg4yjqv543ryrkimr7fk43h-go-1.24.1"
         }
       }
+    },
+    "templ@latest": {
+      "last_modified": "2025-04-03T14:08:01Z",
+      "resolved": "github:NixOS/nixpkgs/2bfc080955153be0be56724be6fa5477b4eefabb#templ",
+      "source": "devbox-search",
+      "version": "0.3.857",
+      "systems": {
+        "aarch64-darwin": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/zz042gdazlmi926g9rkgq12gy8j9m0zd-templ-0.3.857",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/zz042gdazlmi926g9rkgq12gy8j9m0zd-templ-0.3.857"
+        },
+        "aarch64-linux": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/rw8xyig4plg547bg1npws6s7na69vxdg-templ-0.3.857",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/rw8xyig4plg547bg1npws6s7na69vxdg-templ-0.3.857"
+        },
+        "x86_64-darwin": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/xi43xph9dl1gqx7q2jhlz48sg89zk51d-templ-0.3.857",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/xi43xph9dl1gqx7q2jhlz48sg89zk51d-templ-0.3.857"
+        },
+        "x86_64-linux": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/nr1jzqmfyxbxv218rng5ksp33a3iihxp-templ-0.3.857",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/nr1jzqmfyxbxv218rng5ksp33a3iihxp-templ-0.3.857"
+        }
+      }
     }
   }
 }
