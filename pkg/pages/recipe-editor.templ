@@ -1,0 +1,53 @@
+package pages
+
+import "github.com/jonasmh/recipetracker/pkg/models"
+
+templ CreateOrEditRecipePage(recipe models.Recipe) {
+	<div>
+		<h1>Add / update recipe</h1>
+		<form method="POST" action={ templ.URL("/recipes/" + recipe.Id) }>
+			<label for="id">Id</label>
+			if recipe.Id == "" {
+				<input type="text" id="id" name="id" value={ recipe.Id } required/>
+			} else {
+				<input type="text" id="id" name="id" value={ recipe.Id } disabled/>
+			}
+			<label for="title">Title</label>
+			<input type="text" id="title" name="title" value={ recipe.Title } required/>
+			<label for="description">Description</label>
+			<textarea id="description" name="description">{ recipe.Description }</textarea>
+			<h2>Ingredients</h2>
+			<ul id="ingredients-list">
+				for _, ingredient := range recipe.Ingredients {
+					<li>
+						<input type="text" name="ingredients[{i}].name" value={ ingredient.Name } placeholder="Ingredient name" required/>
+						<input type="text" name="ingredients[{i}].quantity" value={ ingredient.Quantity } placeholder="Quantity" required/>
+						<input type="text" name="ingredients[{i}].unit" value={ ingredient.Unit } placeholder="Unit" required/>
+						<button type="button" onclick="removeIngredient(this)">Remove</button>
+					</li>
+				}
+			</ul>
+			<button type="button" onclick="addIngredient()">Add Ingredient</button>
+			<button type="submit">Add / update recipe</button>
+		</form>
+		<script>
+            function addIngredient() {
+                const list = document.getElementById('ingredients-list');
+                const index = list.children.length;
+                const li = document.createElement('li');
+                li.innerHTML = `
+                    <input type="text" name="ingredients[${index}].name" placeholder="Ingredient name" required>
+                    <input type="text" name="ingredients[${index}].quantity" placeholder="Quantity" required>
+                    <input type="text" name="ingredients[${index}].unit" placeholder="Unit" required>
+                    <button type="button" onclick="removeIngredient(this)">Remove</button>
+                `;
+                list.appendChild(li);
+            }
+
+            function removeIngredient(button) {
+                const li = button.parentElement;
+                li.remove();
+            }
+        </script>
+	</div>
+}

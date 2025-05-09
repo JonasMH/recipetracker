@@ -35,13 +35,13 @@ func NewRecipeDatabase(dbLocation string) *RecipeDatabase {
 	}
 }
 
-func (db *RecipeDatabase) GetRecipeHistory(name string) (history []*object.Commit, err error) {
+func (db *RecipeDatabase) GetRecipeHistory(id string) (history []*object.Commit, err error) {
 	repo, err := git.PlainOpen(db.root)
 	if err != nil {
 		return nil, err
 	}
 
-	filePath := recipesPath + name + "/current.json"
+	filePath := recipesPath + id + "/current.json"
 	logIter, err := repo.Log(&git.LogOptions{FileName: &filePath})
 	if err != nil {
 		return nil, err
@@ -83,6 +83,7 @@ func (db *RecipeDatabase) GetRecipe(name string) (model models.Recipe, err error
 	if err := json.NewDecoder(file).Decode(&model); err != nil {
 		return model, err
 	}
+	model.Id = name
 
 	return model, nil
 }
@@ -120,9 +121,7 @@ func (db *RecipeDatabase) GetRecipes() ([]models.Recipe, error) {
 		if err := json.NewDecoder(f).Decode(&recipe); err != nil {
 			return nil, err
 		}
-
-		fileName := dir.Name()
-		recipe.Id = fileName[:len(fileName)-len("/current.json")]
+		recipe.Id = dir.Name()
 
 		recipes = append(recipes, recipe)
 	}
@@ -143,7 +142,7 @@ func (db *RecipeDatabase) AddOrUpdateRecipe(recipe models.Recipe) error {
 
 	filePath := recipesPath + recipe.Id + "/current.json"
 	if _, err := worktree.Filesystem.Stat(recipesPath + recipe.Id); os.IsNotExist(err) {
-		if err := os.Mkdir(recipesPath+recipe.Id, 0755); err != nil {
+		if err := worktree.Filesystem.MkdirAll(recipesPath+recipe.Id, 0755); err != nil {
 			return err
 		}
 	}

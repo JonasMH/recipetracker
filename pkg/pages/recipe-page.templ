@@ -29,25 +29,3 @@ templ RecipePage(recipe models.Recipe, db *database.RecipeDatabase) {
     </div>
     
 }
-
-templ CreateOrEditRecipePage(recipe models.Recipe) {
-    <div>
-        <h1>Add / update recipe</h1>
-        <form method="POST" action="/recipes/{ recipe.ID }">
-            <label for="title">Title</label>
-            <input type="text" id="title" name="title" value="{ recipe.Title }" required>
-
-            <label for="description">Description</label>
-            <textarea id="description" name="description">{ recipe.Description }</textarea>
-
-            <h2>Ingredients</h2>
-            <ul>
-                for _, ingredient := range recipe.Ingredients {
-                    <li>{ ingredient.Name } - { ingredient.Quantity }</li>
-                }
-            </ul>
-
-            <button type="submit">Add / update recipe</button>
-        </form>
-    </div>
-}
