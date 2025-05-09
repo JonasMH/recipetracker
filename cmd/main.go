@@ -26,8 +26,10 @@ func main() {
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
 	r.Get("/", listRecipesHandler)
-	r.Get("/recipes/{name}", recipeHandler)
+	r.Get("/recipes/{id}", recipeHandler)
+	r.Get("/recipes/{id}/edit", recipeEditHandler)
 	r.Post("/recipes/", newRecipeHandler)
+	r.Post("/recipes/{id}", newRecipeHandler)
 
 	log.Println("Server started at :8080")
 	log.Fatal(http.ListenAndServe(":8080", r))
@@ -47,24 +49,43 @@ func listRecipesHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func recipeHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method == http.MethodGet {
-		recipe, err := db.GetRecipe(r.PathValue("name"))
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		w.Header().Set("Content-Type", "text/html")
-		if err := pages.RecipePage(recipe, db).Render(context.Background(), w); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-		}
-
+	recipe, err := db.GetRecipe(r.PathValue("id"))
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+
+	w.Header().Set("Content-Type", "text/html")
+	if err := pages.RecipePage(recipe, db).Render(context.Background(), w); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
+
+func recipeEditHandler(w http.ResponseWriter, r *http.Request) {
+	recipe, err := db.GetRecipe(r.PathValue("id"))
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "text/html")
+	if err := pages.CreateOrEditRecipePage(recipe).Render(context.Background(), w); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
 }
 
 func newRecipeHandler(w http.ResponseWriter, r *http.Request) {
+	var id = r.PathValue("id")
+
+	if id == "" { // New recipe
+		idFromForm := r.FormValue("id")
+		_, err := db.GetRecipe(idFromForm)
+		if err == nil {
+			http.Error(w, "Recipe already exists", http.StatusBadRequest)
+			return
+		}
+	}
+
 	var recipe models.Recipe
 	if err := r.ParseForm(); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)

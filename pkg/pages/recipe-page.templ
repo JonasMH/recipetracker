@@ -11,10 +11,11 @@ templ RecipePage(recipe models.Recipe, db *database.RecipeDatabase) {
 
     <div>
         <h1>{ recipe.Title }</h1>
+        <a href={ templ.URL("/recipes/" + recipe.Id + "/edit") }>Edit</a>
         <p>{ recipe.Description }</p>
         <ul>
             for _, ingredient := range recipe.Ingredients {
-                <li>{ ingredient.Name } - { ingredient.Quantity }</li>
+                <li>{ ingredient.Name } - { ingredient.Quantity } { ingredient.Unit }</li>
             }
         </ul>
         <h2>Instructions</h2>
@@ -27,5 +28,4 @@ templ RecipePage(recipe models.Recipe, db *database.RecipeDatabase) {
             }
         </ul>
     </div>
-    
 }
