@@ -5,13 +5,12 @@ import (
 )
 
 
-
 templ RecipesPage(recipes []models.Recipe) {
 	<div>
 		<h1>Recipes</h1>
 		<ul>
 			for _, recipe := range recipes {
-				<li>{ recipe.Title }</li>
+				<li><a href={templ.URL("/recipe/" + recipe.Id)}>{ recipe.Title }</a> </li>
 			}
 		</ul>
 	</div>

@@ -10,6 +10,7 @@ import (
 
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing/object"
+	"github.com/jonasmh/recipetracker/pkg/database"
 	"github.com/jonasmh/recipetracker/pkg/models"
 	"github.com/jonasmh/recipetracker/pkg/pages"
 )
@@ -19,51 +20,40 @@ const (
 	recipesPath = "recipes/"
 )
 
+var db *database.RecipeDatabase
+
 func main() {
-	if _, err := os.Stat(dbLocation); os.IsNotExist(err) {
-		if err := os.Mkdir(dbLocation, 0755); err != nil {
-			log.Fatalf("Failed to create db directory: %v", err)
-		}
-		_, err := git.PlainInit(dbLocation, false)
-		if err != nil {
-			log.Fatalf("Failed to initialize git repository: %v", err)
-		}
-		log.Println("Database directory created and git initialized.")
+	db = database.NewRecipeDatabase(dbLocation)
+
+	routes := map[string]http.HandlerFunc{
+		"/": func(w http.ResponseWriter, r *http.Request) {
+			if r.URL.Path != "/" {
+				http.NotFound(w, r)
+				return
+			}
+			recipesHandler(w, r)
+		},
+		"/recipe/{name}": recipeHandler,
+		"/new-recipe": newRecipeHandler,
 	}
 
-	http.HandleFunc("/", recipesHandler)
-	http.HandleFunc("/recipe/{name}", recipeHandler)
-	http.HandleFunc("/new-recipe", newRecipeHandler)
+	mux := http.NewServeMux()
+	for path, handler := range routes {
+		mux.HandleFunc(path, handler)
+	}
 
 	log.Println("Server started at :8080")
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	log.Fatal(http.ListenAndServe(":8080", mux))
 }
 
 func recipesHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodGet {
-		files, err := os.ReadDir(dbLocation + recipesPath)
+		recipes, err := db.GetRecipes()
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		var recipes []models.Recipe
-		for _, file := range files {
-			if file.IsDir() {
-				continue
-			}
-			f, err := os.Open(dbLocation + recipesPath + file.Name())
-			if err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
-			}
-			defer f.Close()
-			var recipe models.Recipe
-			if err := json.NewDecoder(f).Decode(&recipe); err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
-			}
-			recipes = append(recipes, recipe)
-		}
+
 		w.Header().Set("Content-Type", "text/html")
 		if err := pages.RecipesPage(recipes).Render(context.Background(), w); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -76,20 +66,14 @@ func recipesHandler(w http.ResponseWriter, r *http.Request) {
 
 func recipeHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodGet {
-		var recipe models.Recipe
-		f, err := os.Open(dbLocation + recipesPath + r.PathValue("name") + ".json")
+		recipe, err := db.GetRecipe(r.PathValue("name"))
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		defer f.Close()
-		if err := json.NewDecoder(f).Decode(&recipe); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
 		w.Header().Set("Content-Type", "text/html")
-		if err := pages.RecipePage(recipe).Render(context.Background(), w); err != nil {
+		if err := pages.RecipePage(recipe, db).Render(context.Background(), w); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
 
