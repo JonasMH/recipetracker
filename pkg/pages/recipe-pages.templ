@@ -3,17 +3,19 @@ package pages
 import "github.com/jonasmh/recipetracker/pkg/models"
 
 templ RecipesPage(recipes []models.Recipe) {
-	<div>
+	@MainLayout() {
 		<div>
-			<h1>Recipes</h1>
-			<ul>
-				for _, recipe := range recipes {
-					<li><a href={ templ.URL("/recipes/" + recipe.Id) }>{ recipe.Title }</a> </li>
-				}
-			</ul>
+			<div>
+				<h1>Recipes</h1>
+				<ul>
+					for _, recipe := range recipes {
+						<li><a href={ templ.URL("/recipes/" + recipe.Id) }>{ recipe.Title }</a> </li>
+					}
+				</ul>
+			</div>
+			<div>
+				@RecipeEditor(models.Recipe{})
+			</div>
 		</div>
-		<div>
-			@CreateOrEditRecipePage(models.Recipe{})
-		</div>
-	</div>
+	}
 }

@@ -1,0 +1,11 @@
+package pages
+
+import (
+	"github.com/jonasmh/recipetracker/pkg/models"
+)
+
+templ RecipeEditPage(recipe models.Recipe) {
+	@MainLayout() {
+		@RecipeEditor(recipe)
+	}
+}

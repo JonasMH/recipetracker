@@ -30,6 +30,7 @@ func main() {
 	r.Get("/recipes/{id}/edit", recipeEditHandler)
 	r.Post("/recipes/", newRecipeHandler)
 	r.Post("/recipes/{id}", newRecipeHandler)
+	r.Handle("/assets/*", http.StripPrefix("/assets/", http.FileServer(http.Dir("assets/"))))
 
 	log.Println("Server started at :8080")
 	log.Fatal(http.ListenAndServe(":8080", r))
@@ -69,7 +70,7 @@ func recipeEditHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "text/html")
-	if err := pages.CreateOrEditRecipePage(recipe).Render(context.Background(), w); err != nil {
+	if err := pages.RecipeEditPage(recipe).Render(context.Background(), w); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }
@@ -92,7 +93,7 @@ func newRecipeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	recipe.Id = r.FormValue("id")
+	recipe.Id = id
 	recipe.Title = r.FormValue("title")
 	recipe.Description = r.FormValue("description")
 	recipe.Ingredients = make([]models.RecipeIngredient, 0)
@@ -120,7 +121,5 @@ func newRecipeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := pages.RecipePage(recipe, db).Render(context.Background(), w); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-	}
+	http.Redirect(w, r, "/recipes/"+recipe.Id, http.StatusSeeOther)
 }

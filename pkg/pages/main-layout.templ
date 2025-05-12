@@ -1,0 +1,18 @@
+package pages
+
+templ MainLayout() {
+	<link rel="stylesheet" href="/assets/styles.css?test=2"/>
+	<div class="dark min-h-screen bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+		<header class="bg-gray-200 dark:bg-gray-800 p-4 shadow-md">
+			<h1 class="text-2xl font-bold">Recipe Tracker</h1>
+			<nav>
+				<ul class="flex space-x-4">
+					<li><a href={ templ.URL("/") } class="text-blue-500 hover:underline">Home</a></li>
+				</ul>
+			</nav>
+		</header>
+		<main class="p-6">
+			{ children... }
+		</main>
+	</div>
+}

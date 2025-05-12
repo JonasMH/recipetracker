@@ -34,3 +34,4 @@ Thumbs.db
 db/
 
 *_templ.go
+node_modules/

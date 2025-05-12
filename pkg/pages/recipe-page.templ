@@ -1,31 +1,31 @@
 package pages
 
 import (
-    "time"
-    "github.com/jonasmh/recipetracker/pkg/models"
-    "github.com/jonasmh/recipetracker/pkg/database"
+	"github.com/jonasmh/recipetracker/pkg/database"
+	"github.com/jonasmh/recipetracker/pkg/models"
+	"time"
 )
 
 templ RecipePage(recipe models.Recipe, db *database.RecipeDatabase) {
-    {{ history, _ := db.GetRecipeHistory(recipe.Id) }}
-
-    <div>
-        <h1>{ recipe.Title }</h1>
-        <a href={ templ.URL("/recipes/" + recipe.Id + "/edit") }>Edit</a>
-        <p>{ recipe.Description }</p>
-        <ul>
-            for _, ingredient := range recipe.Ingredients {
-                <li>{ ingredient.Name } - { ingredient.Quantity } { ingredient.Unit }</li>
-            }
-        </ul>
-        <h2>Instructions</h2>
-        <p>{ recipe.Description }</p>
-
-        <h2>History</h2>
-        <ul>
-            for _, entry := range history {
-                <li>{ entry.Committer.When.Format(time.RFC3339) } - { entry.Message }</li>
-            }
-        </ul>
-    </div>
+	{{ history, _ := db.GetRecipeHistory(recipe.Id) }}
+	@MainLayout() {
+		<div>
+			<h1>{ recipe.Title }</h1>
+			<a href={ templ.URL("/recipes/" + recipe.Id + "/edit") }>Edit</a>
+			<p>{ recipe.Description }</p>
+			<ul>
+				for _, ingredient := range recipe.Ingredients {
+					<li>{ ingredient.Name } - { ingredient.Quantity } { ingredient.Unit }</li>
+				}
+			</ul>
+			<h2>Instructions</h2>
+			<p>{ recipe.Description }</p>
+			<h2>History</h2>
+			<ul>
+				for _, entry := range history {
+					<li>{ entry.Committer.When.Format(time.RFC3339) } - { entry.Message }</li>
+				}
+			</ul>
+		</div>
+	}
 }
