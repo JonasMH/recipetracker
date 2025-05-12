@@ -35,3 +35,5 @@ db/
 
 *_templ.go
 node_modules/
+
+cmd/__debug*

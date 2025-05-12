@@ -6,7 +6,7 @@ import "strconv"
 templ RecipeEditor(recipe models.Recipe) {
 	<div class="max-w-4xl mx-auto p-6 bg-white shadow-md rounded-md dark:bg-gray-800">
 		<h1 class="text-2xl font-bold mb-4 text-gray-900 dark:text-gray-100">Add / update recipe</h1>
-		<form method="POST" action={ templ.URL("/recipes/" + recipe.Id) } class="space-y-6">
+		<form method="POST" action={ templ.URL("/recipes/" + recipe.Id) }  class="space-y-6">
 			<div>
 				<label for="id" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Id</label>
 				if recipe.Id == "" {
@@ -34,6 +34,10 @@ templ RecipeEditor(recipe models.Recipe) {
 					</li>
 				}
 			</ul>
+			<h2 class="text-xl font-semibold mt-6 text-gray-900 dark:text-gray-100">Commit Message</h2>
+			<div>
+				<textarea id="commitMessage" name="commitMessage" class="rt-input" required minlength="5"></textarea>
+			</div>
 			<div class="flex space-x-4">
 				<button type="button" class="rt-btn" onclick="addIngredient()">Add Ingredient</button>
 				<button type="submit" class="rt-btn">Add / update recipe</button>

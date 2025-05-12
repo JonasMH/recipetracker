@@ -3,7 +3,9 @@ package main
 import (
 	"context"
 	"log"
+	"log/slog"
 	"net/http"
+	"net/url"
 	"strconv"
 
 	"github.com/go-chi/chi/v5"
@@ -43,7 +45,7 @@ func listRecipesHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("Content-Type", "text/html")
+	w.Header().Set("Content-Type", "text/html;charset=UTF-8")
 	if err := pages.RecipesPage(recipes).Render(context.Background(), w); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
@@ -56,7 +58,7 @@ func recipeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("Content-Type", "text/html")
+	w.Header().Set("Content-Type", "text/html;charset=UTF-8")
 	if err := pages.RecipePage(recipe, db).Render(context.Background(), w); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
@@ -69,7 +71,7 @@ func recipeEditHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("Content-Type", "text/html")
+	w.Header().Set("Content-Type", "text/html;charset=UTF-8")
 	if err := pages.RecipeEditPage(recipe).Render(context.Background(), w); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
@@ -94,27 +96,33 @@ func newRecipeHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	recipe.Id = id
-	recipe.Title = r.FormValue("title")
-	recipe.Description = r.FormValue("description")
+	recipe.Title, _ = url.QueryUnescape(r.FormValue("title"))
+	recipe.Description, _ = url.QueryUnescape(r.FormValue("description"))
 	recipe.Ingredients = make([]models.RecipeIngredient, 0)
 
 	i := 0
 	for {
-		if r.FormValue("ingredients["+strconv.Itoa(i)+"].name") == "" {
+		nameBefore := r.FormValue("ingredients[" + strconv.Itoa(i) + "].name")
+		name, _ := url.QueryUnescape(r.FormValue("ingredients[" + strconv.Itoa(i) + "].name"))
+		if name == "" {
 			break
 		}
+		slog.Info("nameBefore", "nameBefore", nameBefore)
+
+		quantity, _ := url.QueryUnescape(r.FormValue("ingredients[" + strconv.Itoa(i) + "].quantity"))
+		unit, _ := url.QueryUnescape(r.FormValue("ingredients[" + strconv.Itoa(i) + "].unit"))
 
 		ingredient := models.RecipeIngredient{
-			Name:     r.FormValue("ingredients[" + strconv.Itoa(i) + "].name"),
-			Quantity: r.FormValue("ingredients[" + strconv.Itoa(i) + "].quantity"),
-			Unit:     r.FormValue("ingredients[" + strconv.Itoa(i) + "].unit"),
+			Name:     name,
+			Quantity: quantity,
+			Unit:     unit,
 		}
 		recipe.Ingredients = append(recipe.Ingredients, ingredient)
 
 		i++
 	}
 
-	err := db.AddOrUpdateRecipe(recipe)
+	err := db.AddOrUpdateRecipe(recipe, r.FormValue("commitMessage"))
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)

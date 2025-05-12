@@ -129,7 +129,7 @@ func (db *RecipeDatabase) GetRecipes() ([]models.Recipe, error) {
 	return recipes, nil
 }
 
-func (db *RecipeDatabase) AddOrUpdateRecipe(recipe models.Recipe) error {
+func (db *RecipeDatabase) AddOrUpdateRecipe(recipe models.Recipe, commitMessage string) error {
 	repo, err := git.PlainOpen(db.root)
 	if err != nil {
 		return err
@@ -153,7 +153,8 @@ func (db *RecipeDatabase) AddOrUpdateRecipe(recipe models.Recipe) error {
 	}
 	defer file.Close()
 
-	if err := json.NewEncoder(file).Encode(recipe); err != nil {
+	encoder := json.NewEncoder(file)
+	if err := encoder.Encode(recipe); err != nil {
 		return err
 	}
 
@@ -161,7 +162,7 @@ func (db *RecipeDatabase) AddOrUpdateRecipe(recipe models.Recipe) error {
 		return err
 	}
 
-	if _, err := worktree.Commit("Add or update recipe: "+recipe.Id, &git.CommitOptions{}); err != nil {
+	if _, err := worktree.Commit(commitMessage, &git.CommitOptions{}); err != nil {
 		return err
 	}
 
