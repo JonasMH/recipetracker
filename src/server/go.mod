@@ -2,17 +2,19 @@ module github.com/jonasmh/recipetracker
 
 go 1.24.1
 
-require github.com/go-git/go-git/v5 v5.16.0
+require (
+	github.com/a-h/templ v0.3.865
+	github.com/go-chi/chi/v5 v5.2.1
+	github.com/go-git/go-git/v5 v5.16.0
+)
 
 require (
 	dario.cat/mergo v1.0.0 // indirect
 	github.com/Microsoft/go-winio v0.6.2 // indirect
 	github.com/ProtonMail/go-crypto v1.1.6 // indirect
-	github.com/a-h/templ v0.3.865 // indirect
 	github.com/cloudflare/circl v1.6.1 // indirect
 	github.com/cyphar/filepath-securejoin v0.4.1 // indirect
 	github.com/emirpasic/gods v1.18.1 // indirect
-	github.com/go-chi/chi/v5 v5.2.1 // indirect
 	github.com/go-git/gcfg v1.5.1-0.20230307220236-3a3c6141e376 // indirect
 	github.com/go-git/go-billy/v5 v5.6.2 // indirect
 	github.com/golang/groupcache v0.0.0-20241129210726-2c02b8208cf8 // indirect

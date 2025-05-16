@@ -1,18 +1,15 @@
 package main
 
 import (
-	"context"
+	"encoding/json"
 	"log"
-	"log/slog"
 	"net/http"
-	"net/url"
-	"strconv"
+	"net/http/httputil"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/jonasmh/recipetracker/pkg/database"
 	"github.com/jonasmh/recipetracker/pkg/models"
-	"github.com/jonasmh/recipetracker/pkg/pages"
 )
 
 const (
@@ -27,14 +24,32 @@ func main() {
 
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
-	r.Get("/recipes", listRecipesHandler)
-	r.Post("/recipes", newRecipeHandler)
-	r.Get("/recipes/{id}", recipeHandler)
-	r.Get("/recipes/{id}/edit", recipeEditHandler)
-	r.Post("/recipes/{id}", newRecipeHandler)
+	r.Get("/api/recipes", listRecipesHandler)
+	r.Post("/api/recipes", newRecipeHandler)
+	r.Get("/api/recipes/{id}", recipeHandler)
+	r.Post("/api/recipes/{id}", newRecipeHandler)
+
+	// Proxy all non-/api requests to another host (e.g., frontend dev server)
+	r.NotFound(proxyToHost("http://localhost:3000"))
 
 	log.Println("Server started at :8080")
 	log.Fatal(http.ListenAndServe(":8080", r))
+}
+
+// proxyToHost returns an http.HandlerFunc that proxies requests to the given host
+func proxyToHost(target string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		proxy := &httputil.ReverseProxy{
+			Director: func(req *http.Request) {
+				req.URL.Scheme = "http"
+				req.URL.Host = "localhost:5173"
+				req.URL.Path = r.URL.Path
+				req.URL.RawQuery = r.URL.RawQuery
+				req.Header = r.Header
+			},
+		}
+		proxy.ServeHTTP(w, r)
+	}
 }
 
 func listRecipesHandler(w http.ResponseWriter, r *http.Request) {
@@ -44,8 +59,8 @@ func listRecipesHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("Content-Type", "text/html;charset=UTF-8")
-	if err := pages.RecipesPage(recipes).Render(context.Background(), w); err != nil {
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(recipes); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }
@@ -57,21 +72,8 @@ func recipeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("Content-Type", "text/html;charset=UTF-8")
-	if err := pages.RecipePage(recipe, db).Render(context.Background(), w); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-	}
-}
-
-func recipeEditHandler(w http.ResponseWriter, r *http.Request) {
-	recipe, err := db.GetRecipe(r.PathValue("id"))
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	w.Header().Set("Content-Type", "text/html;charset=UTF-8")
-	if err := pages.RecipeEditPage(recipe).Render(context.Background(), w); err != nil {
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(recipe); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }
@@ -79,54 +81,31 @@ func recipeEditHandler(w http.ResponseWriter, r *http.Request) {
 func newRecipeHandler(w http.ResponseWriter, r *http.Request) {
 	var id = r.PathValue("id")
 
-	if id == "" { // New recipe
-		idFromForm := r.FormValue("id")
-		_, err := db.GetRecipe(idFromForm)
-		if err == nil {
+	var recipe models.Recipe
+	if err := json.NewDecoder(r.Body).Decode(&recipe); err != nil {
+		http.Error(w, "Invalid JSON: "+err.Error(), http.StatusBadRequest)
+		return
+	}
+	if id != "" {
+		recipe.Id = id
+	}
+
+	// Check for duplicate if creating new
+	if id == "" {
+		if _, err := db.GetRecipe(recipe.Id); err == nil {
 			http.Error(w, "Recipe already exists", http.StatusBadRequest)
 			return
 		}
 	}
 
-	var recipe models.Recipe
-	if err := r.ParseForm(); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	recipe.Id = id
-	recipe.Title, _ = url.QueryUnescape(r.FormValue("title"))
-	recipe.Description, _ = url.QueryUnescape(r.FormValue("description"))
-	recipe.Ingredients = make([]models.RecipeIngredient, 0)
-
-	i := 0
-	for {
-		nameBefore := r.FormValue("ingredients[" + strconv.Itoa(i) + "].name")
-		name, _ := url.QueryUnescape(r.FormValue("ingredients[" + strconv.Itoa(i) + "].name"))
-		if name == "" {
-			break
-		}
-		slog.Info("nameBefore", "nameBefore", nameBefore)
-
-		quantity, _ := url.QueryUnescape(r.FormValue("ingredients[" + strconv.Itoa(i) + "].quantity"))
-		unit, _ := url.QueryUnescape(r.FormValue("ingredients[" + strconv.Itoa(i) + "].unit"))
-
-		ingredient := models.RecipeIngredient{
-			Name:     name,
-			Quantity: quantity,
-			Unit:     unit,
-		}
-		recipe.Ingredients = append(recipe.Ingredients, ingredient)
-
-		i++
-	}
-
-	err := db.AddOrUpdateRecipe(recipe, r.FormValue("commitMessage"))
-
+	err := db.AddOrUpdateRecipe(recipe, r.URL.Query().Get("commitMessage"))
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	http.Redirect(w, r, "/recipes/"+recipe.Id, http.StatusSeeOther)
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(recipe); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
 }

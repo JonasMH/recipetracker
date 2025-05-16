@@ -44,6 +44,10 @@ func (db *RecipeDatabase) GetRecipeHistory(id string) (history []*object.Commit,
 	filePath := recipesPath + id + "/current.json"
 	logIter, err := repo.Log(&git.LogOptions{FileName: &filePath})
 	if err != nil {
+		if os.IsNotExist(err) {
+			return make([]*object.Commit, 0), nil
+		}
+
 		return nil, err
 	}
 
@@ -98,13 +102,17 @@ func (db *RecipeDatabase) GetRecipes() ([]models.Recipe, error) {
 	if err != nil {
 		return nil, err
 	}
+	recipes := make([]models.Recipe, 0)
 
 	dirInfo, err := worktree.Filesystem.ReadDir(recipesPath)
 	if err != nil {
+		if os.IsNotExist(err) {
+			return recipes, nil
+		}
+
 		return nil, err
 	}
 
-	recipes := make([]models.Recipe, 0)
 	for _, dir := range dirInfo {
 		if !dir.IsDir() {
 			continue
