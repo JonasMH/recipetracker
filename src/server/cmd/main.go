@@ -27,12 +27,11 @@ func main() {
 
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
-	r.Get("/", listRecipesHandler)
+	r.Get("/recipes", listRecipesHandler)
+	r.Post("/recipes", newRecipeHandler)
 	r.Get("/recipes/{id}", recipeHandler)
 	r.Get("/recipes/{id}/edit", recipeEditHandler)
-	r.Post("/recipes/", newRecipeHandler)
 	r.Post("/recipes/{id}", newRecipeHandler)
-	r.Handle("/assets/*", http.StripPrefix("/assets/", http.FileServer(http.Dir("assets/"))))
 
 	log.Println("Server started at :8080")
 	log.Fatal(http.ListenAndServe(":8080", r))
