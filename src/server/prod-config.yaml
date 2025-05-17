@@ -1,0 +1,8 @@
+# Example configuration file for recipetracker
+# You can use ${ENV_VAR} to substitute environment variables
+server:
+  port: "${PORT:-8080}"
+git:
+  repository: "${PORT:-db/}"
+frontend:
+  enable_proxy: false

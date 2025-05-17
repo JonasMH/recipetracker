@@ -55,7 +55,7 @@ export interface IRecipe {
   description: string;
   ingredients: Array<{
     name: string;
-    quantity: string;
+    quantity: number;
     unit: string;
   }>;
 }

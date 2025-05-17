@@ -94,10 +94,12 @@ const RecipeEditor = (props: { recipe: IRecipe | undefined }) => {
               value={ingredient.quantity ?? ""}
               onChange={(e) => {
                 const updated = [...(form.ingredients ?? [])];
-                updated[idx] = { ...updated[idx], quantity: e.target.value };
+                const numberValue = parseFloat(e.target.value);
+                updated[idx] = { ...updated[idx], quantity: numberValue };
                 setForm({ ...form, ingredients: updated });
               }}
               size="small"
+              type="number"
               sx={{ flex: 1 }}
             />
             <TextField
@@ -136,7 +138,7 @@ const RecipeEditor = (props: { recipe: IRecipe | undefined }) => {
               ...form,
               ingredients: [
                 ...(form.ingredients ?? []),
-                { name: "", quantity: "", unit: "" },
+                { name: "", quantity: 0, unit: "" },
               ],
             });
           }}

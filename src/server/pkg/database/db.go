@@ -2,8 +2,9 @@ package database
 
 import (
 	"encoding/json"
-	"log"
 	"os"
+
+	"log/slog"
 
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing/object"
@@ -21,13 +22,15 @@ const (
 func NewRecipeDatabase(dbLocation string) *RecipeDatabase {
 	if _, err := os.Stat(dbLocation); os.IsNotExist(err) {
 		if err := os.Mkdir(dbLocation, 0755); err != nil {
-			log.Fatalf("Failed to create db directory: %v", err)
+			slog.Error("Failed to create db directory", "err", err, "path", dbLocation)
+			os.Exit(1)
 		}
 		_, err := git.PlainInit(dbLocation, false)
 		if err != nil {
-			log.Fatalf("Failed to initialize git repository: %v", err)
+			slog.Error("Failed to initialize git repository", "err", err)
+			os.Exit(1)
 		}
-		log.Println("Database directory created and git initialized.")
+		slog.Info("Database directory created and git initialized.")
 	}
 
 	return &RecipeDatabase{

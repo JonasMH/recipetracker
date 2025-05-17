@@ -2,38 +2,77 @@ package main
 
 import (
 	"encoding/json"
-	"log"
 	"net/http"
 	"net/http/httputil"
+	"os"
+
+	"log/slog"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
+	"github.com/go-chi/httplog/v2"
+	"github.com/jonasmh/recipetracker/pkg/config"
 	"github.com/jonasmh/recipetracker/pkg/database"
 	"github.com/jonasmh/recipetracker/pkg/models"
 )
 
-const (
-	dbLocation  = "db/"
-	recipesPath = "recipes/"
-)
-
+var cfg *config.Config
 var db *database.RecipeDatabase
 
+func mustLoadConfig() *config.Config {
+	configFile := os.Getenv("CONFIG_FILE")
+	if configFile == "" {
+		configFile = "config.yaml"
+	}
+
+	slog.Info("Loading config file", "file", configFile)
+
+	cfg, err := config.LoadConfig(configFile)
+	if err != nil {
+		slog.Error("Failed to load config", "err", err)
+		os.Exit(1)
+	}
+	return cfg
+}
+
 func main() {
-	db = database.NewRecipeDatabase(dbLocation)
+	cfg = mustLoadConfig()
+	db = database.NewRecipeDatabase(cfg.Git.Repository)
+
+	logger := httplog.NewLogger("httplog-example", httplog.Options{
+		// JSON:             true,
+		LogLevel:         slog.LevelWarn,
+		Concise:          true,
+		JSON:             false,
+		MessageFieldName: "message",
+		RequestHeaders:   false,
+		ResponseHeaders:  false,
+	})
 
 	r := chi.NewRouter()
-	r.Use(middleware.Logger)
+
+	r.Use(httplog.RequestLogger(logger))
 	r.Get("/api/recipes", listRecipesHandler)
 	r.Post("/api/recipes", newRecipeHandler)
 	r.Get("/api/recipes/{id}", recipeHandler)
 	r.Get("/api/recipes/{id}/history", recipeHistoryHandler)
 
-	// Proxy all non-/api requests to another host (e.g., frontend dev server)
-	r.NotFound(proxyToHost("http://localhost:3000"))
+	if cfg.Frontend.EnableProxy {
+		slog.Info("Proxying requests to frontend dev server at", "endpoint", "http://localhost:3000")
+		// Proxy all non-/api requests to another host (e.g., frontend dev server)
+		r.NotFound(proxyToHost("http://localhost:3000"))
+	} else {
+		slog.Info("Serving static files from", "path", "public")
+		r.Handle("/*", http.StripPrefix("/", http.FileServer(http.Dir("public"))))
+	}
 
-	log.Println("Server started at :8080")
-	log.Fatal(http.ListenAndServe(":8080", r))
+	slog.Info("Server started at", "port", cfg.Server.Port)
+
+	err := http.ListenAndServe(":"+cfg.Server.Port, r)
+	if err != nil {
+		slog.Error("Failed to start server", "error", err)
+		os.Exit(1)
+	}
+
 }
 
 // proxyToHost returns an http.HandlerFunc that proxies requests to the given host

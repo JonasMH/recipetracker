@@ -8,7 +8,7 @@ type Recipe struct {
 }
 
 type RecipeIngredient struct {
-	Name     string `json:"name"`
-	Quantity string `json:"quantity"`
-	Unit     string `json:"unit"`
+	Name     string  `json:"name"`
+	Quantity float32 `json:"quantity"`
+	Unit     string  `json:"unit"`
 }

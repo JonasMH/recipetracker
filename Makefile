@@ -1,3 +1,9 @@
+build:
+	@rm -rf bin
+	@cd src/server && go build -o ../../bin/recipetracker cmd/main.go
+	@cd src/server && cp prod-config.yaml ../../bin/config.yaml
+	@cd src/client && npm run build && mv build/client ../../bin/public
+
 watch:
 	make -j2 watch/server watch/client
 
