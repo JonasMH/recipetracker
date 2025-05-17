@@ -1,7 +1,44 @@
-import React from "react";
-import MainLayout from "../components/main-layout";
 import { useAsync, useServer } from "~/server";
 import { useParams } from "react-router";
+import {
+  Box,
+  Typography,
+  List,
+  ListItem,
+  ListItemText,
+  Link,
+  Stack,
+} from "@mui/material";
+import EditIcon from "@mui/icons-material/Edit";
+
+const RecipeHistory = (props: { recipeId: string }) => {
+  const client = useServer();
+
+  const historyState = useAsync(() => client.getRecipeHistory(props.recipeId));
+  if (historyState.loading) {
+    return <Typography>Loading...</Typography>;
+  }
+  if (historyState.error) {
+    return (
+      <Typography color="error">Error: {historyState.error.message}</Typography>
+    );
+  }
+  const history = historyState.data!;
+  return (
+    <List sx={{ mt: 3, p: 0 }}>
+      {history.map((entry, index) => (
+        <ListItem key={index}>
+          <ListItemText
+            primary={`${entry.Message}`}
+            secondary={`${new Date(entry.Committer.When).toLocaleString()} / ${
+              entry.Author.Name
+            }`}
+          />
+        </ListItem>
+      ))}
+    </List>
+  );
+};
 
 const RecipePage = () => {
   const client = useServer();
@@ -10,65 +47,43 @@ const RecipePage = () => {
   const recipeState = useAsync(() => client.getRecipe(recipeId));
 
   if (recipeState.loading) {
-    return <div>Loading...</div>;
+    return <Typography>Loading...</Typography>;
   }
   if (recipeState.error) {
-    return <div>Error: {recipeState.error.message}</div>;
+    return (
+      <Typography color="error">Error: {recipeState.error.message}</Typography>
+    );
   }
 
   const recipe = recipeState.data!;
 
   return (
-    <div>
-      <h1
-        style={{ fontSize: "32px", fontWeight: "bold", marginBottom: "16px" }}
-      >
-        {recipe.title}
-      </h1>
-      <a
-        href={`/recipes/${recipe.id}/edit`}
-        style={{ color: "#007bff", textDecoration: "none" }}
-      >
-        Edit
-      </a>
-      <p style={{ marginTop: "16px", fontSize: "18px" }}>
+    <Box sx={{ width: "100%", maxWidth: 1000, mx: "auto" }}>
+      <Stack direction="row" spacing={2} mb={2}>
+        <Typography variant="h3" fontWeight="bold" mb={2}>
+          {recipe.title}
+          <Link href={`/recipes/${recipe.id}/edit`}>
+            <EditIcon />
+          </Link>
+        </Typography>
+      </Stack>
+      <Typography variant="h4">Ingridients</Typography>
+      <List sx={{ mt: 3, p: 0 }}>
+        {(recipe.ingredients ?? []).map((ingredient, index) => (
+          <ListItem key={index}>
+            <ListItemText
+              primary={`${ingredient.name} - ${ingredient.quantity} ${ingredient.unit}`}
+            />
+          </ListItem>
+        ))}
+      </List>
+      <Typography variant="h4">Description</Typography>
+      <Typography mt={2} fontSize={18}>
         {recipe.description}
-      </p>
-      <ul style={{ marginTop: "24px", listStyle: "none", padding: 0 }}>
-        {recipe.ingredients.map((ingredient, index) => (
-          <li
-            key={index}
-            style={{
-              fontSize: "14px",
-              backgroundColor: "#444",
-              padding: "8px",
-              borderRadius: "4px",
-            }}
-          >
-            {ingredient.name} - {ingredient.quantity} {ingredient.unit}
-          </li>
-        ))}
-      </ul>
-      {/* <h2 style={{ fontSize: "24px", fontWeight: "600", marginTop: "32px" }}>
-        History
-      </h2>
-      <ul style={{ marginTop: "16px", listStyle: "none", padding: 0 }}>
-        {history.map((entry, index) => (
-          <li
-            key={index}
-            style={{
-              fontSize: "14px",
-              backgroundColor: "#444",
-              padding: "8px",
-              borderRadius: "4px",
-            }}
-          >
-            {new Date(entry.Committer.When).toLocaleString()} - {entry.Message}{" "}
-            by {entry.Author.Name}
-          </li>
-        ))}
-      </ul> */}
-    </div>
+      </Typography>
+      <Typography variant="h4">Change History</Typography>
+      <RecipeHistory recipeId={recipe.id} />
+    </Box>
   );
 };
 

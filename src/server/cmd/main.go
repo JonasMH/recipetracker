@@ -27,7 +27,7 @@ func main() {
 	r.Get("/api/recipes", listRecipesHandler)
 	r.Post("/api/recipes", newRecipeHandler)
 	r.Get("/api/recipes/{id}", recipeHandler)
-	r.Post("/api/recipes/{id}", newRecipeHandler)
+	r.Get("/api/recipes/{id}/history", recipeHistoryHandler)
 
 	// Proxy all non-/api requests to another host (e.g., frontend dev server)
 	r.NotFound(proxyToHost("http://localhost:3000"))
@@ -78,24 +78,24 @@ func recipeHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func newRecipeHandler(w http.ResponseWriter, r *http.Request) {
-	var id = r.PathValue("id")
+func recipeHistoryHandler(w http.ResponseWriter, r *http.Request) {
+	recipe, err := db.GetRecipeHistory(r.PathValue("id"))
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(recipe); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
+
+func newRecipeHandler(w http.ResponseWriter, r *http.Request) {
 	var recipe models.Recipe
 	if err := json.NewDecoder(r.Body).Decode(&recipe); err != nil {
 		http.Error(w, "Invalid JSON: "+err.Error(), http.StatusBadRequest)
 		return
-	}
-	if id != "" {
-		recipe.Id = id
-	}
-
-	// Check for duplicate if creating new
-	if id == "" {
-		if _, err := db.GetRecipe(recipe.Id); err == nil {
-			http.Error(w, "Recipe already exists", http.StatusBadRequest)
-			return
-		}
 	}
 
 	err := db.AddOrUpdateRecipe(recipe, r.URL.Query().Get("commitMessage"))

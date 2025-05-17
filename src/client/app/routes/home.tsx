@@ -1,13 +1,21 @@
+import { Paper, Stack } from "@mui/material";
+import RecipeEditor from "~/components/recipe-editor";
+import RecipesList from "~/components/recipes-list";
 import type { Route } from "./+types/home";
-import RecipesPage from "./recipes-page";
 
 export function meta({}: Route.MetaArgs) {
-  return [
-    { title: "New React Router App" },
-    { name: "description", content: "Welcome to React Router!" },
-  ];
+  return [{ title: "RT" }];
 }
 
 export default function Home() {
-  return <RecipesPage />;
+  return (
+    <Stack spacing={2} sx={{ padding: 2 }}>
+      <h2>Recipes</h2>
+      <RecipesList />
+      <h2>Add new</h2>
+      <Paper>
+        <RecipeEditor recipe={undefined} />
+      </Paper>
+    </Stack>
+  );
 }

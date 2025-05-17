@@ -1,115 +1,167 @@
 import React from "react";
-import type { IRecipe } from "~/server";
+import { useServer, type IRecipe } from "~/server";
+import Box from "@mui/material/Box";
+import TextField from "@mui/material/TextField";
+import Button from "@mui/material/Button";
+import { useNavigate } from "react-router";
 
 const RecipeEditor = (props: { recipe: IRecipe | undefined }) => {
-  var recipe = props.recipe ?? ({} as IRecipe);
+  const orignalId = props.recipe?.id;
+
+  const [form, setForm] = React.useState<IRecipe>(
+    props.recipe ?? ({} as IRecipe)
+  );
+  const [commitMessage, setCommitMessage] = React.useState<string>("");
+  const client = useServer();
+  const navigate = useNavigate();
+
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+    console.log(form);
+  };
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    try {
+      const result = await client.editRecipe(form, commitMessage);
+      navigate(`/recipes/${result.id}`);
+    } catch (err) {
+      // Optionally handle error
+      alert("Failed to save recipe");
+    }
+  };
 
   return (
-    <div>
-      <h1
-        style={{ fontSize: "20px", fontWeight: "bold", marginBottom: "16px" }}
-      >
-        Add / Update Recipe
-      </h1>
-      <form
-        method="POST"
-        action={`/recipes/${recipe.id}`}
-        style={{ display: "flex", flexDirection: "column", gap: "16px" }}
-      >
-        <div>
-          <label
-            htmlFor="id"
-            style={{
-              display: "block",
-              marginBottom: "8px",
-              fontSize: "14px",
-              fontWeight: "500",
-            }}
+    <Box component="form" onSubmit={handleSubmit}>
+      <TextField
+        label="Id"
+        id="id"
+        name="id"
+        value={form.id ?? ""}
+        required
+        disabled={!!orignalId}
+        fullWidth
+        margin="normal"
+        onChange={handleChange}
+      />
+      <TextField
+        label="Title"
+        id="title"
+        name="title"
+        value={form.title ?? ""}
+        required
+        fullWidth
+        margin="normal"
+        onChange={handleChange}
+      />
+      <TextField
+        label="Description"
+        id="description"
+        name="description"
+        value={form.description ?? ""}
+        required
+        fullWidth
+        margin="normal"
+        multiline
+        minRows={3}
+        onChange={handleChange}
+      />
+      {/* Ingredients Section */}
+      <Box sx={{ mt: 2, mb: 2 }}>
+        <strong>Ingredients</strong>
+        {(form.ingredients ?? []).map((ingredient, idx) => (
+          <Box
+            key={idx}
+            sx={{ display: "flex", gap: 1, alignItems: "center", mt: 1 }}
           >
-            Id
-          </label>
-          <input
-            type="text"
-            id="id"
-            name="id"
-            value={recipe.id}
-            required
-            disabled={!!recipe.id}
-            style={{
-              width: "100%",
-              padding: "8px",
-              border: "1px solid #ccc",
-              borderRadius: "4px",
-            }}
-          />
-        </div>
-        <div>
-          <label
-            htmlFor="title"
-            style={{
-              display: "block",
-              marginBottom: "8px",
-              fontSize: "14px",
-              fontWeight: "500",
-            }}
-          >
-            Title
-          </label>
-          <input
-            type="text"
-            id="title"
-            name="title"
-            value={recipe.title}
-            required
-            style={{
-              width: "100%",
-              padding: "8px",
-              border: "1px solid #ccc",
-              borderRadius: "4px",
-            }}
-          />
-        </div>
-        <div>
-          <label
-            htmlFor="description"
-            style={{
-              display: "block",
-              marginBottom: "8px",
-              fontSize: "14px",
-              fontWeight: "500",
-            }}
-          >
-            Description
-          </label>
-          <textarea
-            id="description"
-            name="description"
-            value={recipe.description}
-            required
-            style={{
-              width: "100%",
-              padding: "8px",
-              border: "1px solid #ccc",
-              borderRadius: "4px",
-              resize: "vertical",
-            }}
-          />
-        </div>
-        <button
-          type="submit"
-          style={{
-            padding: "12px 24px",
-            backgroundColor: "#007bff",
-            color: "#fff",
-            border: "none",
-            borderRadius: "4px",
-            cursor: "pointer",
+            <TextField
+              label="Name"
+              name={`ingredient-name-${idx}`}
+              value={ingredient.name ?? ""}
+              onChange={(e) => {
+                const updated = [...(form.ingredients ?? [])];
+                updated[idx] = { ...updated[idx], name: e.target.value };
+                setForm({ ...form, ingredients: updated });
+              }}
+              size="small"
+              sx={{ flex: 2 }}
+            />
+            <TextField
+              label="Quantity"
+              name={`ingredient-quantity-${idx}`}
+              value={ingredient.quantity ?? ""}
+              onChange={(e) => {
+                const updated = [...(form.ingredients ?? [])];
+                updated[idx] = { ...updated[idx], quantity: e.target.value };
+                setForm({ ...form, ingredients: updated });
+              }}
+              size="small"
+              sx={{ flex: 1 }}
+            />
+            <TextField
+              label="Unit"
+              name={`ingredient-unit-${idx}`}
+              value={ingredient.unit ?? ""}
+              onChange={(e) => {
+                const updated = [...(form.ingredients ?? [])];
+                updated[idx] = { ...updated[idx], unit: e.target.value };
+                setForm({ ...form, ingredients: updated });
+              }}
+              size="small"
+              sx={{ flex: 1 }}
+            />
+            <Button
+              variant="outlined"
+              color="error"
+              size="small"
+              onClick={() => {
+                const updated = [...(form.ingredients ?? [])];
+                updated.splice(idx, 1);
+                setForm({ ...form, ingredients: updated });
+              }}
+              sx={{ minWidth: 0, px: 1 }}
+            >
+              -
+            </Button>
+          </Box>
+        ))}
+        <Button
+          variant="outlined"
+          size="small"
+          sx={{ mt: 1 }}
+          onClick={() => {
+            setForm({
+              ...form,
+              ingredients: [
+                ...(form.ingredients ?? []),
+                { name: "", quantity: "", unit: "" },
+              ],
+            });
           }}
         >
-          Save
-        </button>
-      </form>
-    </div>
+          Add Ingredient
+        </Button>
+      </Box>
+      <TextField
+        label="Commit Message"
+        id="commitMessage"
+        name="commitMessage"
+        value={commitMessage}
+        fullWidth
+        margin="normal"
+        onChange={(e) => setCommitMessage(e.target.value)}
+      ></TextField>
+      <Button
+        type="submit"
+        variant="contained"
+        color="primary"
+        sx={{ mt: 2, alignSelf: "flex-start" }}
+      >
+        Save
+      </Button>
+    </Box>
   );
 };
 

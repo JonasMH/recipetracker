@@ -3,6 +3,23 @@ import { useState, useEffect, type DependencyList, useCallback } from "react";
 export class RecipePageServer {
   constructor() {}
 
+  async editRecipe(recipe: IRecipe, commitMessage: string): Promise<IRecipe> {
+    const response = await fetch(
+      `/api/recipes?commitMessage=${commitMessage}`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(recipe),
+      }
+    );
+    if (!response.ok) {
+      throw new Error("Failed to fetch recipe");
+    }
+    return response.json();
+  }
+
   async getRecipe(id: string): Promise<IRecipe> {
     const response = await fetch(`/api/recipes/${id}`);
     if (!response.ok) {
@@ -11,7 +28,7 @@ export class RecipePageServer {
     return response.json();
   }
 
-  async getHistory(id: string): Promise<any[]> {
+  async getRecipeHistory(id: string): Promise<any[]> {
     const response = await fetch(`/api/recipes/${id}/history`);
     if (!response.ok) {
       throw new Error("Failed to fetch recipe history");
@@ -38,7 +55,7 @@ export interface IRecipe {
   description: string;
   ingredients: Array<{
     name: string;
-    quantity: number;
+    quantity: string;
     unit: string;
   }>;
 }
