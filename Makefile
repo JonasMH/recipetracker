@@ -4,6 +4,10 @@ build:
 	@cd src/server && cp prod-config.yaml ../../bin/config.yaml
 	@cd src/client && npm run build && mv build/client ../../bin/public
 
+restore:
+	@cd src/server && go mod tidy
+	@cd src/client && npm install
+
 watch:
 	make -j2 watch/server watch/client
 
