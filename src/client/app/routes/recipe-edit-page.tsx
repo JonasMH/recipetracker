@@ -1,4 +1,4 @@
-import { useAsync, useServer } from "~/server";
+import { useAsync, useClient } from "~/server";
 import { useParams } from "react-router";
 import type { Route } from "./+types/recipe-edit-page";
 import { Paper, Stack } from "@mui/material";
@@ -12,7 +12,7 @@ export function meta({}: Route.MetaArgs) {
 }
 
 const RecipeEditPage = () => {
-  const client = useServer();
+  const client = useClient();
   const recipeId = useParams().recipeId!;
 
   const recipeState = useAsync(() => client.getRecipe(recipeId));

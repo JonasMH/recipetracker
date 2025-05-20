@@ -65,7 +65,23 @@ export function Layout({ children }: { children: React.ReactNode }) {
                   Recipe Tracker
                 </Typography>
               </Link>
-              <nav></nav>
+              <nav>
+                <Link href="/" sx={{ color: "white", textDecoration: "none" }}>
+                  Recipes
+                </Link>
+                <Link
+                  href="/new-recipe"
+                  sx={{ color: "white", textDecoration: "none", ml: 2 }}
+                >
+                  Add Recipe
+                </Link>
+                <Link
+                  href="/db-status"
+                  sx={{ color: "white", textDecoration: "none", ml: 2 }}
+                >
+                  DB Status
+                </Link>
+              </nav>
             </Toolbar>
           </AppBar>
           {children}

@@ -1,5 +1,5 @@
 import React from "react";
-import { useServer, type IRecipe } from "~/server";
+import { useClient, type IRecipe } from "~/server";
 import Box from "@mui/material/Box";
 import TextField from "@mui/material/TextField";
 import Button from "@mui/material/Button";
@@ -12,7 +12,7 @@ const RecipeEditor = (props: { recipe: IRecipe | undefined }) => {
     props.recipe ?? ({} as IRecipe)
   );
   const [commitMessage, setCommitMessage] = React.useState<string>("");
-  const client = useServer();
+  const client = useClient();
   const navigate = useNavigate();
 
   const handleChange = (

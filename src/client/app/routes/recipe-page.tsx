@@ -1,4 +1,4 @@
-import { useAsync, useServer } from "~/server";
+import { useAsync, useClient } from "~/server";
 import { useParams } from "react-router";
 import {
   Box,
@@ -12,7 +12,7 @@ import {
 import EditIcon from "@mui/icons-material/Edit";
 
 const RecipeHistory = (props: { recipeId: string }) => {
-  const client = useServer();
+  const client = useClient();
 
   const historyState = useAsync(() => client.getRecipeHistory(props.recipeId));
   if (historyState.loading) {
@@ -41,7 +41,7 @@ const RecipeHistory = (props: { recipeId: string }) => {
 };
 
 const RecipePage = () => {
-  const client = useServer();
+  const client = useClient();
   const recipeId = useParams().recipeId!;
 
   const recipeState = useAsync(() => client.getRecipe(recipeId));

@@ -1,6 +1,6 @@
 import { useState, useEffect, type DependencyList, useCallback } from "react";
 
-export class RecipePageServer {
+export class RecipeClient {
   constructor() {}
 
   async editRecipe(recipe: IRecipe, commitMessage: string): Promise<IRecipe> {
@@ -43,10 +43,28 @@ export class RecipePageServer {
     }
     return response.json();
   }
+
+  async dbPush(): Promise<void> {
+    const response = await fetch(`/api/db/push`, {
+      method: "POST",
+    });
+    if (!response.ok) {
+      throw new Error("Failed to push database: " + (await response.text()));
+    }
+  }
+
+  async dbPull(): Promise<void> {
+    const response = await fetch(`/api/db/pull`, {
+      method: "POST",
+    });
+    if (!response.ok) {
+      throw new Error("Failed to pull database: " + (await response.text()));
+    }
+  }
 }
 
-export function useServer(): RecipePageServer {
-  return new RecipePageServer();
+export function useClient(): RecipeClient {
+  return new RecipeClient();
 }
 
 export interface IRecipe {

@@ -20,6 +20,7 @@ const (
 )
 
 func NewRecipeDatabase(dbLocation string) *RecipeDatabase {
+
 	if _, err := os.Stat(dbLocation); os.IsNotExist(err) {
 		if err := os.Mkdir(dbLocation, 0755); err != nil {
 			slog.Error("Failed to create db directory", "err", err, "path", dbLocation)
@@ -30,7 +31,9 @@ func NewRecipeDatabase(dbLocation string) *RecipeDatabase {
 			slog.Error("Failed to initialize git repository", "err", err)
 			os.Exit(1)
 		}
-		slog.Info("Database directory created and git initialized.")
+		slog.Info("Created git repository", "path", dbLocation)
+	} else {
+		slog.Info("Opening git repository", "path", dbLocation)
 	}
 
 	return &RecipeDatabase{
@@ -93,6 +96,37 @@ func (db *RecipeDatabase) GetRecipe(name string) (model models.Recipe, err error
 	model.Id = name
 
 	return model, nil
+}
+
+func (db *RecipeDatabase) Push() error {
+	repo, err := git.PlainOpen(db.root)
+	if err != nil {
+		return err
+	}
+
+	if err := repo.Push(&git.PushOptions{}); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (db *RecipeDatabase) Pull() error {
+	repo, err := git.PlainOpen(db.root)
+	if err != nil {
+		return err
+	}
+	worktree, err := repo.Worktree()
+	if err != nil {
+		return err
+	}
+
+	err = worktree.Pull(&git.PullOptions{})
+	if err != nil && err != git.NoErrAlreadyUpToDate {
+		return err
+	}
+
+	return nil
 }
 
 func (db *RecipeDatabase) GetRecipes() ([]models.Recipe, error) {

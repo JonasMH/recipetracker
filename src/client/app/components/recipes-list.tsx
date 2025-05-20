@@ -1,4 +1,4 @@
-import { useAsync, useServer } from "~/server";
+import { useAsync, useClient } from "~/server";
 import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
 import Typography from "@mui/material/Typography";
@@ -6,7 +6,7 @@ import CardActionArea from "@mui/material/CardActionArea";
 import Grid2 from "@mui/material/Grid";
 
 const RecipesList = () => {
-  const client = useServer();
+  const client = useClient();
   const recipesState = useAsync(() => client.getRecipes());
 
   if (recipesState.loading) {

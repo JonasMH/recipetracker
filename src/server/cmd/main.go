@@ -51,6 +51,8 @@ func main() {
 	r := chi.NewRouter()
 
 	r.Use(httplog.RequestLogger(logger))
+	r.Post("/api/db/push", dbPushHandler)
+	r.Post("/api/db/pull", dbPullHandler)
 	r.Get("/api/recipes", listRecipesHandler)
 	r.Post("/api/recipes", newRecipeHandler)
 	r.Get("/api/recipes/{id}", recipeHandler)
@@ -62,7 +64,22 @@ func main() {
 		r.NotFound(proxyToHost("http://localhost:3000"))
 	} else {
 		slog.Info("Serving static files from", "path", "public")
-		r.Handle("/*", http.StripPrefix("/", http.FileServer(http.Dir("public"))))
+		// Serve static files, and if not found, serve index.html (SPA fallback)
+		r.NotFound(func(w http.ResponseWriter, r *http.Request) {
+			// Only fallback for non-API routes
+			if len(r.URL.Path) >= 4 && r.URL.Path[:4] == "/api" {
+				http.NotFound(w, r)
+				return
+			}
+			// Try to serve the static file
+			filePath := "public" + r.URL.Path
+			if info, err := os.Stat(filePath); err == nil && !info.IsDir() {
+				http.ServeFile(w, r, filePath)
+				return
+			}
+			// Fallback to index.html
+			http.ServeFile(w, r, "public/index.html")
+		})
 	}
 
 	slog.Info("Server started at", "port", cfg.Server.Port)
@@ -146,5 +163,21 @@ func newRecipeHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(recipe); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
+
+func dbPushHandler(w http.ResponseWriter, r *http.Request) {
+	err := db.Push()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
+
+func dbPullHandler(w http.ResponseWriter, r *http.Request) {
+	err := db.Pull()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
 }

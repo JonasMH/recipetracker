@@ -12,10 +12,6 @@ export default function Home() {
     <Stack spacing={2} sx={{ padding: 2 }}>
       <h2>Recipes</h2>
       <RecipesList />
-      <h2>Add new</h2>
-      <Paper>
-        <RecipeEditor recipe={undefined} />
-      </Paper>
     </Stack>
   );
 }
