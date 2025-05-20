@@ -154,7 +154,7 @@ func newRecipeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := db.AddOrUpdateRecipe(recipe, r.URL.Query().Get("commitMessage"))
+	err := db.AddOrUpdateRecipe(recipe, r.URL.Query().Get("commitMessage"), r.URL.Query().Get("author"), r.URL.Query().Get("email"))
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

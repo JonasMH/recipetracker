@@ -1,4 +1,4 @@
-import { useAsync, useClient } from "~/server";
+import { useClient } from "~/server";
 import { useParams } from "react-router";
 import {
   Box,
@@ -10,6 +10,7 @@ import {
   Stack,
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
+import { useAsync } from "~/utils";
 
 const RecipeHistory = (props: { recipeId: string }) => {
   const client = useClient();

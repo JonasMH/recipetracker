@@ -20,9 +20,6 @@ const DbStatusPage = () => {
     setLoading(true);
     setError(null);
     cmd()
-      .then(() => {
-        alert("Push successful");
-      })
       .catch((err) => {
         setError(err);
       })

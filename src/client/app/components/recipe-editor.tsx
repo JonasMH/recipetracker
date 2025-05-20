@@ -1,17 +1,26 @@
-import React from "react";
+import React, { useState } from "react";
 import { useClient, type IRecipe } from "~/server";
 import Box from "@mui/material/Box";
 import TextField from "@mui/material/TextField";
 import Button from "@mui/material/Button";
 import { useNavigate } from "react-router";
+import { useLocalState } from "~/utils";
+import { Stack } from "@mui/material";
 
 const RecipeEditor = (props: { recipe: IRecipe | undefined }) => {
   const orignalId = props.recipe?.id;
 
-  const [form, setForm] = React.useState<IRecipe>(
-    props.recipe ?? ({} as IRecipe)
+  const [form, setForm] = useState<IRecipe>(props.recipe ?? ({} as IRecipe));
+  const [commitMessage, setCommitMessage] = useState<string>("");
+  const [authorName, setAuthorName] = useLocalState<string | undefined>(
+    "gitName",
+    undefined
   );
-  const [commitMessage, setCommitMessage] = React.useState<string>("");
+  const [authorEmail, setAuthorEmail] = useLocalState<string | undefined>(
+    "gitEmail",
+    undefined
+  );
+  const [error, setError] = useState<string | undefined>(undefined);
   const client = useClient();
   const navigate = useNavigate();
 
@@ -19,22 +28,37 @@ const RecipeEditor = (props: { recipe: IRecipe | undefined }) => {
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     setForm({ ...form, [e.target.name]: e.target.value });
-    console.log(form);
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setError(undefined);
+
+    if ((authorName?.length ?? 0) < 5) {
+      setError("Author name must be at least 5 characters long");
+      return;
+    }
+
+    if ((authorEmail?.length ?? 0) < 5) {
+      setError("Author email must be at least 5 characters long");
+      return;
+    }
+
     try {
-      const result = await client.editRecipe(form, commitMessage);
+      const result = await client.editRecipe(
+        form,
+        commitMessage,
+        authorName!,
+        authorEmail!
+      );
       navigate(`/recipes/${result.id}`);
     } catch (err) {
-      // Optionally handle error
-      alert("Failed to save recipe");
+      setError(err + "");
     }
   };
 
   return (
-    <Box component="form" onSubmit={handleSubmit}>
+    <Box component="form" onSubmit={handleSubmit} sx={{ padding: 2 }}>
       <TextField
         label="Id"
         id="id"
@@ -146,6 +170,26 @@ const RecipeEditor = (props: { recipe: IRecipe | undefined }) => {
           Add Ingredient
         </Button>
       </Box>
+      <Stack direction="row" spacing={2}>
+        <TextField
+          label="Author Name"
+          id="authorName"
+          name="authorName"
+          value={authorName}
+          fullWidth
+          margin="normal"
+          onChange={(e) => setAuthorName(e.target.value)}
+        ></TextField>
+        <TextField
+          label="Author Email"
+          id="authorEmail"
+          name="authorEmail"
+          value={authorEmail}
+          fullWidth
+          margin="normal"
+          onChange={(e) => setAuthorEmail(e.target.value)}
+        ></TextField>
+      </Stack>
       <TextField
         label="Commit Message"
         id="commitMessage"
@@ -163,6 +207,19 @@ const RecipeEditor = (props: { recipe: IRecipe | undefined }) => {
       >
         Save
       </Button>
+      {error && (
+        <Box
+          sx={{
+            mt: 2,
+            padding: 2,
+            backgroundColor: "error.main",
+            color: "white",
+          }}
+        >
+          <h3>Error</h3>
+          <p>{error}</p>
+        </Box>
+      )}
     </Box>
   );
 };

@@ -1,6 +1,6 @@
 build:
 	@rm -rf bin
-	@cd src/server && go build -o ../../bin/recipetracker cmd/main.go
+	@cd src/server && GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o ../../bin/recipetracker cmd/main.go
 	@cd src/server && cp prod-config.yaml ../../bin/config.yaml
 	@cd src/client && npm run build && mv build/client ../../bin/public
 
@@ -17,3 +17,6 @@ watch/server:
 
 watch/client:
 	@cd src/client && npm run dev
+
+image:
+	@docker build -t recipetracker:latest -f Dockerfile .

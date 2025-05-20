@@ -1,9 +1,10 @@
-import { useAsync, useClient } from "~/server";
+import { useClient } from "~/server";
 import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
 import Typography from "@mui/material/Typography";
 import CardActionArea from "@mui/material/CardActionArea";
 import Grid2 from "@mui/material/Grid";
+import { useAsync } from "~/utils";
 
 const RecipesList = () => {
   const client = useClient();

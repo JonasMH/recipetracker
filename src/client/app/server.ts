@@ -3,9 +3,14 @@ import { useState, useEffect, type DependencyList, useCallback } from "react";
 export class RecipeClient {
   constructor() {}
 
-  async editRecipe(recipe: IRecipe, commitMessage: string): Promise<IRecipe> {
+  async editRecipe(
+    recipe: IRecipe,
+    commitMessage: string,
+    author: string,
+    email: string
+  ): Promise<IRecipe> {
     const response = await fetch(
-      `/api/recipes?commitMessage=${commitMessage}`,
+      `/api/recipes?commitMessage=${commitMessage}&author=${author}&email=${email}`,
       {
         method: "POST",
         headers: {
@@ -15,7 +20,7 @@ export class RecipeClient {
       }
     );
     if (!response.ok) {
-      throw new Error("Failed to fetch recipe");
+      throw new Error("Failed to edit recipe: " + (await response.text()));
     }
     return response.json();
   }
@@ -23,7 +28,7 @@ export class RecipeClient {
   async getRecipe(id: string): Promise<IRecipe> {
     const response = await fetch(`/api/recipes/${id}`);
     if (!response.ok) {
-      throw new Error("Failed to fetch recipe");
+      throw new Error("Failed to fetch recipe: " + (await response.text()));
     }
     return response.json();
   }
@@ -31,7 +36,9 @@ export class RecipeClient {
   async getRecipeHistory(id: string): Promise<any[]> {
     const response = await fetch(`/api/recipes/${id}/history`);
     if (!response.ok) {
-      throw new Error("Failed to fetch recipe history");
+      throw new Error(
+        "Failed to fetch recipe history: " + (await response.text())
+      );
     }
     return response.json();
   }
@@ -39,7 +46,7 @@ export class RecipeClient {
   async getRecipes(): Promise<IRecipe[]> {
     const response = await fetch(`/api/recipes`);
     if (!response.ok) {
-      throw new Error("Failed to fetch recipes");
+      throw new Error("Failed to get recipes: " + (await response.text()));
     }
     return response.json();
   }
@@ -76,27 +83,4 @@ export interface IRecipe {
     quantity: number;
     unit: string;
   }>;
-}
-
-export function useAsync<T>(
-  callback: () => Promise<T>,
-  deps?: DependencyList
-): { loading: boolean; data: T | null; error: Error | null } {
-  const [loading, setLoading] = useState(true);
-  const [data, setData] = useState<T | null>(null);
-  const [error, setError] = useState<Error | null>(null);
-
-  const callbackMemoized = useCallback(() => {
-    setLoading(true);
-    setError(undefined!);
-    setData(undefined!);
-    callback()
-      .then(setData)
-      .catch(setError)
-      .finally(() => setLoading(false));
-  }, deps ?? []);
-
-  useEffect(() => callbackMemoized(), [callbackMemoized]);
-
-  return { loading, data, error };
 }

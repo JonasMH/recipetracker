@@ -3,6 +3,7 @@ package database
 import (
 	"encoding/json"
 	"os"
+	"time"
 
 	"log/slog"
 
@@ -174,7 +175,7 @@ func (db *RecipeDatabase) GetRecipes() ([]models.Recipe, error) {
 	return recipes, nil
 }
 
-func (db *RecipeDatabase) AddOrUpdateRecipe(recipe models.Recipe, commitMessage string) error {
+func (db *RecipeDatabase) AddOrUpdateRecipe(recipe models.Recipe, commitMessage, authourName, authorEmail string) error {
 	repo, err := git.PlainOpen(db.root)
 	if err != nil {
 		return err
@@ -207,7 +208,13 @@ func (db *RecipeDatabase) AddOrUpdateRecipe(recipe models.Recipe, commitMessage 
 		return err
 	}
 
-	if _, err := worktree.Commit(commitMessage, &git.CommitOptions{}); err != nil {
+	if _, err := worktree.Commit(commitMessage, &git.CommitOptions{
+		Author: &object.Signature{
+			Name:  authourName,
+			Email: authorEmail,
+			When:  time.Now(),
+		},
+	}); err != nil {
 		return err
 	}
 

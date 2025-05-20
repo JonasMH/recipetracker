@@ -1,8 +1,9 @@
-import { useAsync, useClient } from "~/server";
+import { useClient } from "~/server";
 import { useParams } from "react-router";
 import type { Route } from "./+types/recipe-edit-page";
 import { Paper, Stack } from "@mui/material";
 import RecipeEditor from "~/components/recipe-editor";
+import { useAsync } from "~/utils";
 
 export function meta({}: Route.MetaArgs) {
   return [
