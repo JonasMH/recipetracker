@@ -29,7 +29,7 @@ const RecipeEditPage = () => {
 
   return (
     <Stack spacing={2} sx={{ padding: 2 }}>
-      <h2>Edit {recipe.id}</h2>
+      <h2>Edit {recipe.title}</h2>
       <Paper>
         <RecipeEditor recipe={recipe} />
       </Paper>

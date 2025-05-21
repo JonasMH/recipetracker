@@ -1,11 +1,15 @@
 import { useClient } from "~/server";
-import Card from "@mui/material/Card";
-import CardContent from "@mui/material/CardContent";
-import Typography from "@mui/material/Typography";
-import CardActionArea from "@mui/material/CardActionArea";
-import Grid2 from "@mui/material/Grid";
+import List from "@mui/material/List";
+import ListItem from "@mui/material/ListItem";
+import ListItemButton from "@mui/material/ListItemButton";
+import ListItemText from "@mui/material/ListItemText";
 import { useAsync } from "~/utils";
 import { Marked, marked } from "marked";
+import ListSubheader from "@mui/material/ListSubheader";
+import Divider from "@mui/material/Divider";
+import RestaurantMenuIcon from "@mui/icons-material/RestaurantMenu";
+import ListItemIcon from "@mui/material/ListItemIcon";
+import { Fragment } from "react/jsx-runtime";
 
 const RecipesList = () => {
   const client = useClient();
@@ -19,25 +23,28 @@ const RecipesList = () => {
   }
 
   const recipes = recipesState.data!;
-  const markedInstance = new Marked();
 
   return (
-    <Grid2 container spacing={2}>
+    <List
+      sx={{ width: "100%", maxWidth: 600, bgcolor: "background.paper", margin: "0 auto", borderRadius: 2, boxShadow: 2 }}
+    >
       {recipes.map((entry, index) => (
-        <Grid2 size={{ xl: 3, lg: 3, md: 3, sm: 6, xs: 12 }} key={index}>
-          <Card>
-            <CardActionArea href={`/recipes/${entry.id}`}>
-              <CardContent>
-                <Typography variant="h6">{entry.title}</Typography>
-                <Typography variant="body2" color="text.secondary">
-                  {markedInstance.parseInline(entry.description)}
-                </Typography>
-              </CardContent>
-            </CardActionArea>
-          </Card>
-        </Grid2>
+        <Fragment key={entry.id}>
+          <ListItem disablePadding sx={{ mb: 1 }}>
+            <ListItemButton component="a" href={`/recipes/${entry.id}`} sx={{ py: 2 }}>
+              <ListItemIcon>
+                <RestaurantMenuIcon color="primary" />
+              </ListItemIcon>
+              <ListItemText
+                primary={entry.title}
+                slotProps={{ primary: { fontWeight: "bold", fontSize: 18 } }}
+              />
+            </ListItemButton>
+          </ListItem>
+          {index < recipes.length - 1 && <Divider component="li" />}
+        </Fragment>
       ))}
-    </Grid2>
+    </List>
   );
 };
 

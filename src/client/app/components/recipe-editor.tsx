@@ -11,7 +11,6 @@ const RecipeEditor = (props: { recipe: IRecipe | undefined }) => {
   const orignalId = props.recipe?.id;
 
   const [form, setForm] = useState<IRecipe>(props.recipe ?? ({} as IRecipe));
-  const [commitMessage, setCommitMessage] = useState<string>("");
   const [authorName, setAuthorName] = useLocalStorage<string | undefined>(
     "gitName",
     undefined
@@ -45,9 +44,32 @@ const RecipeEditor = (props: { recipe: IRecipe | undefined }) => {
     }
 
     try {
+      // Convert title to a slug: lowercase, a-z, 0-9, and -
+      const slugify = (str: string) =>
+        str
+          .normalize("NFD") // decompose accents
+          .replace(/[\u0300-\u036f]/g, "") // remove accents
+            .toLowerCase()
+            .replace(/[åäàáâãā]/g, "aa")
+            .replace(/[æ]/g, "ae")
+            .replace(/[öòóôõōø]/g, "oe")
+            .replace(/[üúùûū]/g, "u")
+            .replace(/[éèêëē]/g, "e")
+            .replace(/[íìîïī]/g, "i")
+            .replace(/[ç]/g, "c")
+            .replace(/[ñ]/g, "n")
+            .replace(/[^a-z0-9]+/g, "-") // replace non a-z0-9 with -
+          .replace(/^-+|-+$/g, "") // trim leading/trailing -
+          .replace(/--+/g, "-"); // collapse multiple -
+
+      const id = orignalId ?? slugify(form.title ?? "");
+
       const result = await client.editRecipe(
-        form,
-        commitMessage,
+        { 
+          ...form,
+          id,
+        },
+        `Changed ${id}`,
         authorName!,
         authorEmail!
       );
@@ -59,17 +81,6 @@ const RecipeEditor = (props: { recipe: IRecipe | undefined }) => {
 
   return (
     <Box component="form" onSubmit={handleSubmit} sx={{ padding: 2 }}>
-      <TextField
-        label="Id"
-        id="id"
-        name="id"
-        value={form.id ?? ""}
-        required
-        disabled={!!orignalId}
-        fullWidth
-        margin="normal"
-        onChange={handleChange}
-      />
       <TextField
         label="Title"
         id="title"
@@ -190,15 +201,6 @@ const RecipeEditor = (props: { recipe: IRecipe | undefined }) => {
           onChange={(e) => setAuthorEmail(e.target.value)}
         ></TextField>
       </Stack>
-      <TextField
-        label="Commit Message"
-        id="commitMessage"
-        name="commitMessage"
-        value={commitMessage}
-        fullWidth
-        margin="normal"
-        onChange={(e) => setCommitMessage(e.target.value)}
-      ></TextField>
       <Button
         type="submit"
         variant="contained"
