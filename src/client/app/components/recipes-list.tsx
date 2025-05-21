@@ -4,12 +4,11 @@ import ListItem from "@mui/material/ListItem";
 import ListItemButton from "@mui/material/ListItemButton";
 import ListItemText from "@mui/material/ListItemText";
 import { useAsync } from "~/utils";
-import { Marked, marked } from "marked";
-import ListSubheader from "@mui/material/ListSubheader";
 import Divider from "@mui/material/Divider";
 import RestaurantMenuIcon from "@mui/icons-material/RestaurantMenu";
 import ListItemIcon from "@mui/material/ListItemIcon";
 import { Fragment } from "react/jsx-runtime";
+import { Link } from "@mui/material";
 
 const RecipesList = () => {
   const client = useClient();
@@ -26,18 +25,28 @@ const RecipesList = () => {
 
   return (
     <List
-      sx={{ width: "100%", maxWidth: 600, bgcolor: "background.paper", margin: "0 auto", borderRadius: 2, boxShadow: 2 }}
+      disablePadding
+      sx={{
+        height: '100%',
+        overflowY: 'scroll',
+        scrollbarGutter: 'stable', // Always reserve space for scrollbar
+        minHeight: 200, // Optional: ensures a minimum height
+      }}
     >
       {recipes.map((entry, index) => (
         <Fragment key={entry.id}>
           <ListItem disablePadding sx={{ mb: 1 }}>
-            <ListItemButton component="a" href={`/recipes/${entry.id}`} sx={{ py: 2 }}>
+            <ListItemButton
+              component={Link}
+              href={`/recipes/${entry.id}`}
+              sx={{ py: 2 }}
+            >
               <ListItemIcon>
                 <RestaurantMenuIcon color="primary" />
               </ListItemIcon>
               <ListItemText
                 primary={entry.title}
-                slotProps={{ primary: { fontWeight: "bold", fontSize: 18 } }}
+                slotProps={{primary: { fontWeight: "bold", fontSize: 18 }}}
               />
             </ListItemButton>
           </ListItem>

@@ -15,6 +15,7 @@ import {
 } from "react-router";
 import type { LinkProps } from "@mui/material/Link";
 import MenuIcon from "@mui/icons-material/Menu";
+import AddIcon from "@mui/icons-material/Add";
 import IconButton from "@mui/material/IconButton";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
@@ -58,14 +59,14 @@ export function Layout({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <html lang="en">
+    <html lang="en" style={{height: "100%"}}>
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <Meta />
+        <title>Recipe Tracker</title>
         <Links />
       </head>
-      <body>
+      <body style={{height: "100%"}}>
         <ThemeProvider theme={theme}>
           <CssBaseline />
           <AppBar position="static">
@@ -90,6 +91,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
                   <Link href="/db-status" sx={{ color: "white", textDecoration: "none" }}>
                     DB Status
                   </Link>
+                  <Link href="/about" sx={{ color: "white", textDecoration: "none" }}>
+                    About
+                  </Link>
                 </Stack>
               </Box>
               {/* Hamburger menu for mobile */}
@@ -110,21 +114,18 @@ export function Layout({ children }: { children: React.ReactNode }) {
                   anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
                   transformOrigin={{ vertical: "top", horizontal: "right" }}
                 >
-                  <MenuItem component={Link} href="/" onClick={handleMenuClose}>
-                    Recipes
-                  </MenuItem>
-                  <MenuItem component={Link} href="/new-recipe" onClick={handleMenuClose}>
-                    Add Recipe
-                  </MenuItem>
                   <MenuItem component={Link} href="/db-status" onClick={handleMenuClose}>
                     DB Status
+                  </MenuItem>
+                  <MenuItem component={Link} href="/about" onClick={handleMenuClose}>
+                    About
                   </MenuItem>
                 </Menu>
               </Box>
             </Toolbar>
           </AppBar>
-          <Container maxWidth="md" sx={{ mt: 2, mb: 2 }}>
-            <Box sx={{ minHeight: "70vh" }}>{/* Responsive main content */}
+          <Container maxWidth="md" disableGutters style={{height: "calc(100vh - 64px)"}}>
+            <Box sx={{ minHeight: "70vh", height: "100%" }}>{/* Responsive main content */}
               <Outlet />
             </Box>
           </Container>

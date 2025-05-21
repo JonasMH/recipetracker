@@ -47,7 +47,7 @@ const RecipePage = () => {
   const recipe = recipeState.data!;
 
   return (
-    <Box sx={{ width: "100%", maxWidth: 1000, mx: "auto" }}>
+    <Box sx={{ m: 2 }}>
       <Stack direction="row" spacing={2} mb={2}>
         <Typography variant="h4" fontWeight="bold">
           {recipe.title}

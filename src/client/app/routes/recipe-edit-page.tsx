@@ -1,16 +1,8 @@
 import { useClient } from "~/server";
 import { useParams } from "react-router";
-import type { Route } from "./+types/recipe-edit-page";
-import { Paper, Stack } from "@mui/material";
+import { Paper, Stack, Typography } from "@mui/material";
 import RecipeEditor from "~/components/recipe-editor";
 import { useAsync } from "~/utils";
-
-export function meta({}: Route.MetaArgs) {
-  return [
-    { title: "New React Router App" },
-    { name: "description", content: "Welcome to React Router!" },
-  ];
-}
 
 const RecipeEditPage = () => {
   const client = useClient();
@@ -29,10 +21,8 @@ const RecipeEditPage = () => {
 
   return (
     <Stack spacing={2} sx={{ padding: 2 }}>
-      <h2>Edit {recipe.title}</h2>
-      <Paper>
-        <RecipeEditor recipe={recipe} />
-      </Paper>
+      <Typography variant="h5">Edit {recipe.title}</Typography>
+      <RecipeEditor recipe={recipe} />
     </Stack>
   );
 };

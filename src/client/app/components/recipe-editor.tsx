@@ -80,7 +80,7 @@ const RecipeEditor = (props: { recipe: IRecipe | undefined }) => {
   };
 
   return (
-    <Box component="form" onSubmit={handleSubmit} sx={{ padding: 2 }}>
+    <Box component="form" onSubmit={handleSubmit}>
       <TextField
         label="Title"
         id="title"

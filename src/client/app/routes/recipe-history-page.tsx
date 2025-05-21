@@ -1,6 +1,5 @@
 import { useClient } from "~/server";
 import { useParams } from "react-router";
-import type { Route } from "./+types/recipe-history-page";
 import {
   List,
   ListItem,
@@ -10,13 +9,6 @@ import {
   Typography,
 } from "@mui/material";
 import { useAsync } from "~/utils";
-
-export function meta({}: Route.MetaArgs) {
-  return [
-    { title: "New React Router App" },
-    { name: "description", content: "Welcome to React Router!" },
-  ];
-}
 
 const RecipeHistory = (props: { recipeId: string }) => {
   const client = useClient();

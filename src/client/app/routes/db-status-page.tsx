@@ -1,14 +1,6 @@
 import { Button, Paper, Stack } from "@mui/material";
-import type { Route } from "./+types/db-status-page";
 import { useClient } from "~/server";
 import { useState } from "react";
-
-export function meta({}: Route.MetaArgs) {
-  return [
-    { title: "RT - Add Recipe" },
-    { name: "description", content: "Welcome to React Router!" },
-  ];
-}
 
 const DbStatusPage = () => {
   const client = useClient();
