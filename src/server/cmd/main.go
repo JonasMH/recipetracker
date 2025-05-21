@@ -36,7 +36,7 @@ func mustLoadConfig() *config.Config {
 
 func main() {
 	cfg = mustLoadConfig()
-	db = database.NewRecipeDatabase(cfg.Git.Repository)
+	db = database.NewRecipeDatabase(cfg.Git)
 
 	logger := httplog.NewLogger("httplog-example", httplog.Options{
 		// JSON:             true,

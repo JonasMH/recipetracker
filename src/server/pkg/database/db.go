@@ -10,33 +10,37 @@ import (
 
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing/object"
+	"github.com/go-git/go-git/v5/plumbing/transport/ssh"
+	"github.com/jonasmh/recipetracker/pkg/config"
 	"github.com/jonasmh/recipetracker/pkg/models"
 )
 
 type RecipeDatabase struct {
-	root string
+	root       string
+	remote     string
+	sshKeyPath string
 }
 
 const (
 	recipesPath = "recipes/"
 )
 
-func NewRecipeDatabase(dbLocation string) *RecipeDatabase {
+func NewRecipeDatabase(config config.GitConfig) *RecipeDatabase {
 
-	if _, err := os.Stat(dbLocation); os.IsNotExist(err) {
-		if err := os.Mkdir(dbLocation, 0755); err != nil {
-			slog.Error("Failed to create db directory", "err", err, "path", dbLocation)
+	if _, err := os.Stat(config.Repository); os.IsNotExist(err) {
+		if err := os.Mkdir(config.Repository, 0755); err != nil {
+			slog.Error("Failed to create db directory", "err", err, "path", config.Repository)
 			os.Exit(1)
 		}
-		_, err := git.PlainInit(dbLocation, false)
+		_, err := git.PlainInit(config.Repository, false)
 		if err != nil {
 			slog.Error("Failed to initialize git repository", "err", err)
 			os.Exit(1)
 		}
-		slog.Info("Created git repository", "path", dbLocation)
+		slog.Info("Created git repository", "path", config.Repository)
 	} else {
-		slog.Info("Opening git repository", "path", dbLocation)
-		_, err := git.PlainInit(dbLocation, false)
+		slog.Info("Opening git repository", "path", config.Repository)
+		_, err := git.PlainInit(config.Repository, false)
 		if err != nil && !errors.Is(err, git.ErrRepositoryAlreadyExists) {
 			slog.Error("Failed to open git repository", "err", err)
 			os.Exit(1)
@@ -44,7 +48,9 @@ func NewRecipeDatabase(dbLocation string) *RecipeDatabase {
 	}
 
 	return &RecipeDatabase{
-		root: dbLocation,
+		root:       config.Repository,
+		remote:     config.Remote,
+		sshKeyPath: config.SshKeyPath,
 	}
 }
 
@@ -111,7 +117,15 @@ func (db *RecipeDatabase) Push() error {
 		return err
 	}
 
-	if err := repo.Push(&git.PushOptions{}); err != nil {
+	sshKey, err := db.loadSshkey()
+	if err != nil {
+		return err
+	}
+
+	if err := repo.Push(&git.PushOptions{
+		RemoteURL: db.remote,
+		Auth:      sshKey,
+	}); err != nil {
 		return err
 	}
 
@@ -128,7 +142,15 @@ func (db *RecipeDatabase) Pull() error {
 		return err
 	}
 
-	err = worktree.Pull(&git.PullOptions{})
+	sshKey, err := db.loadSshkey()
+	if err != nil {
+		return err
+	}
+
+	err = worktree.Pull(&git.PullOptions{
+		RemoteURL: db.remote,
+		Auth:      sshKey,
+	})
 	if err != nil && err != git.NoErrAlreadyUpToDate {
 		return err
 	}
@@ -225,4 +247,17 @@ func (db *RecipeDatabase) AddOrUpdateRecipe(recipe models.Recipe, commitMessage,
 	}
 
 	return nil
+}
+
+func (db *RecipeDatabase) loadSshkey() (*ssh.PublicKeys, error) {
+	if db.sshKeyPath == "" {
+		return nil, nil
+	}
+	publicKey, err := ssh.NewPublicKeysFromFile("git", db.sshKeyPath, "")
+
+	if err != nil {
+		return nil, err
+	}
+
+	return publicKey, nil
 }

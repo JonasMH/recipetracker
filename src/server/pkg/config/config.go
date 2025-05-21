@@ -9,13 +9,17 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+type GitConfig struct {
+	Repository string `yaml:"repository"`
+	Remote     string `yaml:"remote"`
+	SshKeyPath string `yaml:"sshKeyPath"`
+}
+
 type Config struct {
 	Server struct {
 		Port string `yaml:"port"`
 	} `yaml:"server"`
-	Git struct {
-		Repository string `yaml:"repository"`
-	} `yaml:"git"`
+	Git      GitConfig `yaml:"git"`
 	Frontend struct {
 		EnableProxy bool `yaml:"enable_proxy"`
 	} `yaml:"frontend"`
