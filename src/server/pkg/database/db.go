@@ -2,6 +2,7 @@ package database
 
 import (
 	"encoding/json"
+	"errors"
 	"os"
 	"time"
 
@@ -35,6 +36,11 @@ func NewRecipeDatabase(dbLocation string) *RecipeDatabase {
 		slog.Info("Created git repository", "path", dbLocation)
 	} else {
 		slog.Info("Opening git repository", "path", dbLocation)
+		_, err := git.PlainInit(dbLocation, false)
+		if err != nil && !errors.Is(err, git.ErrRepositoryAlreadyExists) {
+			slog.Error("Failed to open git repository", "err", err)
+			os.Exit(1)
+		}
 	}
 
 	return &RecipeDatabase{
