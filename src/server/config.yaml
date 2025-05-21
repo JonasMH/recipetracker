@@ -4,5 +4,7 @@ server:
   port: "${PORT:-8080}"
 git:
   repository: "${PORT:-db/}"
+  remote: ssh://git@github.com/JonasMH/recipes-testing.git
+  sshKeyPath: "../../.secrets/id_ed25519"
 frontend:
   enable_proxy: true

@@ -36,7 +36,12 @@ func mustLoadConfig() *config.Config {
 
 func main() {
 	cfg = mustLoadConfig()
-	db = database.NewRecipeDatabase(cfg.Git)
+	database, err := database.NewRecipeDatabase(cfg.Git)
+	if err != nil {
+		slog.Error("Failed to initialize database", "err", err)
+		os.Exit(1)
+	}
+	db = database
 
 	logger := httplog.NewLogger("httplog-example", httplog.Options{
 		// JSON:             true,
@@ -84,7 +89,7 @@ func main() {
 
 	slog.Info("Server started at", "port", cfg.Server.Port)
 
-	err := http.ListenAndServe(":"+cfg.Server.Port, r)
+	err = http.ListenAndServe(":"+cfg.Server.Port, r)
 	if err != nil {
 		slog.Error("Failed to start server", "error", err)
 		os.Exit(1)

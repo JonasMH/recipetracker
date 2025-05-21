@@ -20,7 +20,6 @@ build/
 
 # IDE and editor files
 .idea/
-.vscode/
 *.swp
 *.swo
 
@@ -37,3 +36,5 @@ db/
 node_modules/
 
 cmd/__debug*
+
+.secrets/
