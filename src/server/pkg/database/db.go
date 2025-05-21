@@ -122,6 +122,8 @@ func (db *RecipeDatabase) Push() error {
 		return err
 	}
 
+	slog.Info("Pushing to remote", "remote", db.remote)
+
 	if err := repo.Push(&git.PushOptions{
 		RemoteURL: db.remote,
 		Auth:      sshKey,
@@ -146,6 +148,8 @@ func (db *RecipeDatabase) Pull() error {
 	if err != nil {
 		return err
 	}
+
+	slog.Info("Pulling from remote", "remote", db.remote)
 
 	err = worktree.Pull(&git.PullOptions{
 		RemoteURL: db.remote,
@@ -251,6 +255,7 @@ func (db *RecipeDatabase) AddOrUpdateRecipe(recipe models.Recipe, commitMessage,
 
 func (db *RecipeDatabase) loadSshkey() (*ssh.PublicKeys, error) {
 	if db.sshKeyPath == "" {
+		slog.Info("SSH key path not set, not auth")
 		return nil, nil
 	}
 	publicKey, err := ssh.NewPublicKeysFromFile("git", db.sshKeyPath, "")
