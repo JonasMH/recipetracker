@@ -8,14 +8,19 @@ import {
   ListItemText,
   Link,
   Stack,
+  ListItemIcon,
+  Checkbox,
+  ListItemButton,
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
-import { useAsync } from "~/utils";
+import { useAsync, useLocalStorage } from "~/utils";
+import { marked } from "marked";
+import { useEffect, useState } from "react";
 
 const RecipeHistory = (props: { recipeId: string }) => {
   const client = useClient();
-
   const historyState = useAsync(() => client.getRecipeHistory(props.recipeId));
+
   if (historyState.loading) {
     return <Typography>Loading...</Typography>;
   }
@@ -46,6 +51,20 @@ const RecipePage = () => {
   const recipeId = useParams().recipeId!;
 
   const recipeState = useAsync(() => client.getRecipe(recipeId));
+  const [descriptionMarkdown, setDescriptionMarkdown] = useState("");
+
+  const [checkedIngredients, setCheckedIngredients] = useLocalStorage<{
+    [key: string]: boolean;
+  }>(`checkedIngredients${recipeId}`, {});
+
+  useEffect(() => {
+    if (recipeState.data?.description) {
+      const html = marked.parse(recipeState.data.description) as string;
+      setDescriptionMarkdown(html);
+    } else {
+      setDescriptionMarkdown("");
+    }
+  }, [recipeState.data?.description]);
 
   if (recipeState.loading) {
     return <Typography>Loading...</Typography>;
@@ -61,28 +80,45 @@ const RecipePage = () => {
   return (
     <Box sx={{ width: "100%", maxWidth: 1000, mx: "auto" }}>
       <Stack direction="row" spacing={2} mb={2}>
-        <Typography variant="h3" fontWeight="bold" mb={2}>
+        <Typography variant="h4" fontWeight="bold">
           {recipe.title}
           <Link href={`/recipes/${recipe.id}/edit`}>
             <EditIcon />
           </Link>
         </Typography>
       </Stack>
-      <Typography variant="h4">Ingridients</Typography>
-      <List sx={{ mt: 3, p: 0 }}>
+      <Typography variant="h5">Ingridients</Typography>
+      <List>
         {(recipe.ingredients ?? []).map((ingredient, index) => (
-          <ListItem key={index}>
-            <ListItemText
-              primary={`${ingredient.name} - ${ingredient.quantity} ${ingredient.unit}`}
-            />
+          <ListItem key={index} disablePadding>
+            <ListItemButton
+              role={undefined}
+              onClick={(e) => setCheckedIngredients({
+                ...checkedIngredients,
+                [ingredient.name]: !checkedIngredients[ingredient.name]
+              })}
+              dense
+            >
+              <ListItemIcon>
+                <Checkbox
+                  edge="start"
+                  checked={checkedIngredients[ingredient.name] ?? false}
+                  tabIndex={-1}
+                  disableRipple
+                />
+              </ListItemIcon>
+              <ListItemText
+                primary={`${ingredient.quantity} ${ingredient.unit} ${ingredient.name}`}
+              />
+            </ListItemButton>
           </ListItem>
         ))}
       </List>
-      <Typography variant="h4">Description</Typography>
-      <Typography mt={2} fontSize={18}>
-        {recipe.description}
-      </Typography>
-      <Typography variant="h4">Change History</Typography>
+      <Typography variant="h5">Description</Typography>
+      <Box mt={2} fontSize={18}>
+        <span dangerouslySetInnerHTML={{ __html: descriptionMarkdown }} />
+      </Box>
+      <Typography variant="h5">Change History</Typography>
       <RecipeHistory recipeId={recipe.id} />
     </Box>
   );

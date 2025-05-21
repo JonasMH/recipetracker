@@ -4,7 +4,7 @@ import Box from "@mui/material/Box";
 import TextField from "@mui/material/TextField";
 import Button from "@mui/material/Button";
 import { useNavigate } from "react-router";
-import { useLocalState } from "~/utils";
+import { useLocalStorage } from "~/utils";
 import { Stack } from "@mui/material";
 
 const RecipeEditor = (props: { recipe: IRecipe | undefined }) => {
@@ -12,11 +12,11 @@ const RecipeEditor = (props: { recipe: IRecipe | undefined }) => {
 
   const [form, setForm] = useState<IRecipe>(props.recipe ?? ({} as IRecipe));
   const [commitMessage, setCommitMessage] = useState<string>("");
-  const [authorName, setAuthorName] = useLocalState<string | undefined>(
+  const [authorName, setAuthorName] = useLocalStorage<string | undefined>(
     "gitName",
     undefined
   );
-  const [authorEmail, setAuthorEmail] = useLocalState<string | undefined>(
+  const [authorEmail, setAuthorEmail] = useLocalStorage<string | undefined>(
     "gitEmail",
     undefined
   );

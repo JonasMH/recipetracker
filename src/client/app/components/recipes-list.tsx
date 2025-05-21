@@ -5,6 +5,7 @@ import Typography from "@mui/material/Typography";
 import CardActionArea from "@mui/material/CardActionArea";
 import Grid2 from "@mui/material/Grid";
 import { useAsync } from "~/utils";
+import { Marked, marked } from "marked";
 
 const RecipesList = () => {
   const client = useClient();
@@ -18,17 +19,18 @@ const RecipesList = () => {
   }
 
   const recipes = recipesState.data!;
+  const markedInstance = new Marked();
 
   return (
     <Grid2 container spacing={2}>
       {recipes.map((entry, index) => (
-        <Grid2 size={3} key={index}>
+        <Grid2 size={{ xl: 3, lg: 3, md: 3, sm: 6, xs: 12 }} key={index}>
           <Card>
             <CardActionArea href={`/recipes/${entry.id}`}>
               <CardContent>
                 <Typography variant="h6">{entry.title}</Typography>
                 <Typography variant="body2" color="text.secondary">
-                  {entry.description}
+                  {markedInstance.parseInline(entry.description)}
                 </Typography>
               </CardContent>
             </CardActionArea>
