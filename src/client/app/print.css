@@ -1,0 +1,31 @@
+@media print {
+  /* Hide edit and history icons/links */
+  .print-hide {
+    display: none !important;
+  }
+  /* Hide checkboxes and interactive elements */
+  .MuiToolbar-root,
+  .MuiCheckbox-root,
+  .MuiListItemButton-root {
+    display: none !important;
+  }
+  /* Remove margins and set readable font */
+  body, .MuiBox-root {
+    margin: 0 !important;
+    font-size: 12pt !important;
+    color: #000 !important;
+    background: #fff !important;
+  }
+  /* Ensure ingredients and description are clear */
+  .MuiListItemText-root {
+    font-size: 12pt !important;
+  }
+  /* Avoid page breaks inside ingredient lists */
+  ul, ol {
+    page-break-inside: avoid;
+  }
+  /* Ensure .print-only elements are visible when printing */
+  .print-only {
+    display: block !important;
+  }
+}
