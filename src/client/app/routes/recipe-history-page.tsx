@@ -28,8 +28,8 @@ const RecipeHistory = (props: { recipeId: string }) => {
       {history.map((entry, index) => (
         <ListItem key={index}>
           <ListItemText
-            primary={`Changed by ${entry.Author.Name}`}
-            secondary={`${new Date(entry.Committer.When).toLocaleString()}`}
+            primary={`Changed by ${entry.author.name}`}
+            secondary={`${new Date(entry.author.when).toLocaleString()}`}
           />
         </ListItem>
       ))}

@@ -15,12 +15,14 @@ import {
   IconButton,
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
+import AddIcon from "@mui/icons-material/Add";
 import HistoryIcon from "@mui/icons-material/History";
 import { useAsync, useLocalStorage } from "~/utils";
 import { marked } from "marked";
 import { useMemo } from "react";
 import { Print } from "@mui/icons-material";
 import { DateTime } from "luxon";
+import { RecipeLogs } from "./recipe-logs-page";
 
 const RecipePage = () => {
   const client = useClient();
@@ -113,6 +115,14 @@ const RecipePage = () => {
       <Box mt={2} fontSize={18}>
         <span dangerouslySetInnerHTML={{ __html: descriptionMarkdown }} />
       </Box>
+      <Typography variant="h4">Previous cooks 
+            <IconButton
+              LinkComponent={Link}
+              href={`/recipes/${recipe.id}/logs`}
+            >
+              <AddIcon />
+            </IconButton></Typography>
+      <RecipeLogs recipeId={recipe.id} />
       {/* Print-only footer with source */}
       <Box
         className="print-only"

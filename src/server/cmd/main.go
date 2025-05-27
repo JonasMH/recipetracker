@@ -1,18 +1,13 @@
 package main
 
 import (
-	"encoding/json"
-	"net/http"
-	"net/http/httputil"
 	"os"
 
 	"log/slog"
 
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/httplog/v2"
 	"github.com/jonasmh/recipetracker/pkg/config"
 	"github.com/jonasmh/recipetracker/pkg/database"
-	"github.com/jonasmh/recipetracker/pkg/models"
+	"github.com/jonasmh/recipetracker/pkg/webserver"
 )
 
 var cfg *config.Config
@@ -36,153 +31,19 @@ func mustLoadConfig() *config.Config {
 
 func main() {
 	cfg = mustLoadConfig()
-	database, err := database.NewRecipeDatabase(cfg.Git)
+	database, err := database.New(cfg.Git)
 	if err != nil {
 		slog.Error("Failed to initialize database", "err", err)
 		os.Exit(1)
 	}
 	db = database
 
-	logger := httplog.NewLogger("httplog-example", httplog.Options{
-		// JSON:             true,
-		LogLevel:         slog.LevelWarn,
-		Concise:          true,
-		JSON:             false,
-		MessageFieldName: "message",
-		RequestHeaders:   false,
-		ResponseHeaders:  false,
-	})
+	webserver := webserver.New(cfg, db)
 
-	r := chi.NewRouter()
+	err = webserver.ListenAndServe()
 
-	r.Use(httplog.RequestLogger(logger))
-	r.Post("/api/db/push", dbPushHandler)
-	r.Post("/api/db/pull", dbPullHandler)
-	r.Get("/api/recipes", listRecipesHandler)
-	r.Post("/api/recipes", newRecipeHandler)
-	r.Get("/api/recipes/{id}", recipeHandler)
-	r.Get("/api/recipes/{id}/history", recipeHistoryHandler)
-
-	if cfg.Frontend.EnableProxy {
-		slog.Info("Proxying requests to frontend dev server at", "endpoint", "http://localhost:3000")
-		// Proxy all non-/api requests to another host (e.g., frontend dev server)
-		r.NotFound(proxyToHost("http://localhost:3000"))
-	} else {
-		slog.Info("Serving static files from", "path", "public")
-		// Serve static files, and if not found, serve index.html (SPA fallback)
-		r.NotFound(func(w http.ResponseWriter, r *http.Request) {
-			// Only fallback for non-API routes
-			if len(r.URL.Path) >= 4 && r.URL.Path[:4] == "/api" {
-				http.NotFound(w, r)
-				return
-			}
-			// Try to serve the static file
-			filePath := "public" + r.URL.Path
-			if info, err := os.Stat(filePath); err == nil && !info.IsDir() {
-				http.ServeFile(w, r, filePath)
-				return
-			}
-			// Fallback to index.html
-			http.ServeFile(w, r, "public/index.html")
-		})
-	}
-
-	slog.Info("Server started at", "port", cfg.Server.Port)
-
-	err = http.ListenAndServe(":"+cfg.Server.Port, r)
 	if err != nil {
-		slog.Error("Failed to start server", "error", err)
+		slog.Error("Failed to start web server", "err", err)
 		os.Exit(1)
-	}
-
-}
-
-// proxyToHost returns an http.HandlerFunc that proxies requests to the given host
-func proxyToHost(target string) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		proxy := &httputil.ReverseProxy{
-			Director: func(req *http.Request) {
-				req.URL.Scheme = "http"
-				req.URL.Host = "localhost:5173"
-				req.URL.Path = r.URL.Path
-				req.URL.RawQuery = r.URL.RawQuery
-				req.Header = r.Header
-			},
-		}
-		proxy.ServeHTTP(w, r)
-	}
-}
-
-func listRecipesHandler(w http.ResponseWriter, r *http.Request) {
-	recipes, err := db.GetRecipes()
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	if err := json.NewEncoder(w).Encode(recipes); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-	}
-}
-
-func recipeHandler(w http.ResponseWriter, r *http.Request) {
-	recipe, err := db.GetRecipe(r.PathValue("id"))
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	if err := json.NewEncoder(w).Encode(recipe); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-	}
-}
-
-func recipeHistoryHandler(w http.ResponseWriter, r *http.Request) {
-	recipe, err := db.GetRecipeHistory(r.PathValue("id"))
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	if err := json.NewEncoder(w).Encode(recipe); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-	}
-}
-
-func newRecipeHandler(w http.ResponseWriter, r *http.Request) {
-	var recipe models.Recipe
-	if err := json.NewDecoder(r.Body).Decode(&recipe); err != nil {
-		http.Error(w, "Invalid JSON: "+err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	err := db.AddOrUpdateRecipe(recipe, r.URL.Query().Get("commitMessage"), r.URL.Query().Get("author"), r.URL.Query().Get("email"))
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	if err := json.NewEncoder(w).Encode(recipe); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-	}
-}
-
-func dbPushHandler(w http.ResponseWriter, r *http.Request) {
-	err := db.Push()
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-}
-
-func dbPullHandler(w http.ResponseWriter, r *http.Request) {
-	err := db.Pull()
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
 	}
 }
