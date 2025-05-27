@@ -30,6 +30,7 @@ export const RecipeLogs = (props: { recipeId: string }) => {
       <Typography color="error">Error: {historyState.error.message}</Typography>
     );
   }
+
   const history = historyState.data!;
   return (
     <Grid container sx={{ mt: 3, p: 0 }}>
@@ -44,7 +45,7 @@ export const RecipeLogs = (props: { recipeId: string }) => {
               <Typography variant="body2" sx={{ color: "text.secondary" }}>
                 {entry.description}
                 <List>
-                  {entry.actualIngredients.map((ingredient, idx) => (
+                  {entry.actualIngredients?.map((ingredient, idx) => (
                     <ListItem>
                       <ListItemText
                         primary={`${ingredient.name} ${ingredient.quantity} ${ingredient.unit}`}

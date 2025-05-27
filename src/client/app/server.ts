@@ -124,7 +124,7 @@ export interface IRecipeLog {
   id: string;
   recipeId: string;
   description: string;
-  actualIngredients: IRecipeIngredient[];
+  actualIngredients: IRecipeIngredient[] | undefined;
   commit: ICommit | undefined;
 }
 
