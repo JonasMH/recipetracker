@@ -14,6 +14,7 @@ export default [
     route("recipes/:recipeId", "routes/recipe-page.tsx"),
     route("recipes/:recipeId/history", "routes/recipe-history-page.tsx"),
     route("recipes/:recipeId/logs", "routes/recipe-logs-page.tsx"),
+    route("recipes/:recipeId/logs/:logId/edit", "routes/recipe-log-edit-page.tsx"),
     route("recipes/:recipeId/edit", "routes/recipe-edit-page.tsx"),
   ]),
 ] satisfies RouteConfig;

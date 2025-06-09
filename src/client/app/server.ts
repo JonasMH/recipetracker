@@ -59,7 +59,7 @@ export class RecipeClient {
     commitMessage: string,
     author: string,
     email: string
-  ): Promise<IRecipe> {
+  ): Promise<IRecipeLog> {
     const response = await fetch(
       `/api/recipes/${recipe.recipeId}/logs?commitMessage=${commitMessage}&author=${author}&email=${email}`,
       {
@@ -72,6 +72,17 @@ export class RecipeClient {
     );
     if (!response.ok) {
       throw new Error("Failed to create recipe log: " + (await response.text()));
+    }
+    return response.json();
+  }
+
+  
+  async getRecipeLog(recipeId: string, logId: string): Promise<IRecipeLog> {
+    const response = await fetch(`/api/recipes/${recipeId}/logs/${logId}`);
+    if (!response.ok) {
+      throw new Error(
+        "Failed to fetch recipe logs: " + (await response.text())
+      );
     }
     return response.json();
   }

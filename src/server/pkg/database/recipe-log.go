@@ -57,6 +57,43 @@ func (db *RecipeDatabase) AddRecipeLog(rlog models.RecipeLog, commitMessage, aut
 	return nil
 }
 
+func (db *RecipeDatabase) GetRecipeLog(recipeId string, logId string) (*models.RecipeLog, error) {
+	repo, err := git.PlainOpen(db.root)
+	if err != nil {
+		return nil, err
+	}
+
+	worktree, err := repo.Worktree()
+	if err != nil {
+		return nil, err
+	}
+
+	recipeLogFileName := recipesPath + recipeId + "/logs/" + logId + ".json"
+	f, err := worktree.Filesystem.Open(recipeLogFileName)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+
+	var rlog models.RecipeLog
+	if err := json.NewDecoder(f).Decode(&rlog); err != nil {
+		return nil, err
+	}
+	rlog.Id = logId
+	// Get the commit of when this file was last changed
+	logIter, err := repo.Log(&git.LogOptions{FileName: &recipeLogFileName})
+	if err == nil {
+		defer logIter.Close()
+		commit, err := logIter.Next()
+		if err == nil && commit != nil {
+			commitModel := convertToCommitModel(commit)
+			rlog.Commit = &commitModel
+		}
+	}
+
+	return &rlog, nil
+}
+
 func (db *RecipeDatabase) GetRecipeLogs(recipeId string) ([]models.RecipeLog, error) {
 	repo, err := git.PlainOpen(db.root)
 	if err != nil {
@@ -95,7 +132,7 @@ func (db *RecipeDatabase) GetRecipeLogs(recipeId string) ([]models.RecipeLog, er
 		if err := json.NewDecoder(f).Decode(&rlog); err != nil {
 			return nil, err
 		}
-		rlog.Id = logFile.Name()
+		rlog.Id = logFile.Name()[:len(logFile.Name())-len(".json")]
 		// Get the commit of when this file was last changed
 		logIter, err := repo.Log(&git.LogOptions{FileName: &recipeLogFileName})
 		if err == nil {

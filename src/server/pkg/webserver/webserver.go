@@ -43,10 +43,11 @@ func New(cfg *config.Config, db *database.RecipeDatabase) *WebServer {
 	server.r.Post("/api/db/pull", server.dbPullHandler)
 	server.r.Get("/api/recipes", server.listRecipesHandler)
 	server.r.Post("/api/recipes", server.newRecipeHandler)
-	server.r.Get("/api/recipes/{id}", server.recipeHandler)
-	server.r.Get("/api/recipes/{id}/history", server.recipeHistoryHandler)
-	server.r.Get("/api/recipes/{id}/logs", server.recipeLogsHandler)
-	server.r.Post("/api/recipes/{id}/logs", server.newRecipeLogHandler)
+	server.r.Get("/api/recipes/{recipeId}", server.recipeHandler)
+	server.r.Get("/api/recipes/{recipeId}/history", server.recipeHistoryHandler)
+	server.r.Get("/api/recipes/{recipeId}/logs", server.recipeLogsHandler)
+	server.r.Post("/api/recipes/{recipeId}/logs", server.newRecipeLogHandler)
+	server.r.Get("/api/recipes/{recipeId}/logs/{logId}", server.recipeLogHandler)
 
 	if cfg.Frontend.EnableProxy {
 		slog.Info("Proxying requests to frontend dev server at", "endpoint", "http://localhost:3000")
@@ -115,7 +116,7 @@ func (s *WebServer) listRecipesHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *WebServer) recipeHandler(w http.ResponseWriter, r *http.Request) {
-	recipe, err := s.db.GetRecipe(r.PathValue("id"))
+	recipe, err := s.db.GetRecipe(r.PathValue("recipeId"))
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -128,7 +129,7 @@ func (s *WebServer) recipeHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *WebServer) recipeHistoryHandler(w http.ResponseWriter, r *http.Request) {
-	recipe, err := s.db.GetRecipeHistory(r.PathValue("id"))
+	recipe, err := s.db.GetRecipeHistory(r.PathValue("recipeId"))
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -176,7 +177,7 @@ func (s *WebServer) dbPullHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *WebServer) recipeLogsHandler(w http.ResponseWriter, r *http.Request) {
-	recipeLogs, err := s.db.GetRecipeLogs(r.PathValue("id"))
+	recipeLogs, err := s.db.GetRecipeLogs(r.PathValue("recipeId"))
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -184,6 +185,19 @@ func (s *WebServer) recipeLogsHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(recipeLogs); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
+
+func (s *WebServer) recipeLogHandler(w http.ResponseWriter, r *http.Request) {
+	recipeLog, err := s.db.GetRecipeLog(r.PathValue("recipeId"), r.PathValue("logId"))
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(recipeLog); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }
