@@ -3,14 +3,15 @@ import { useState, useEffect, type DependencyList, useCallback } from "react";
 export class RecipeClient {
   constructor() {}
 
-  async editRecipe(
-    recipe: IRecipe,
-    commitMessage: string,
-    author: string,
-    email: string
-  ): Promise<IRecipe> {
+  private commitInfoToQueryString(commitInfo: ICommitBody): string {
+    return `commitMessage=${encodeURIComponent(
+      commitInfo.message
+    )}&author=${encodeURIComponent(commitInfo.name)}`;
+  }
+
+  async editRecipe(recipe: IRecipe, commitInfo: ICommitBody): Promise<IRecipe> {
     const response = await fetch(
-      `/api/recipes?commitMessage=${commitMessage}&author=${author}&email=${email}`,
+      `/api/recipes?${this.commitInfoToQueryString(commitInfo)}`,
       {
         method: "POST",
         headers: {
@@ -53,15 +54,14 @@ export class RecipeClient {
     return response.json();
   }
 
-  
   async editRecipeLog(
     recipe: IRecipeLog,
-    commitMessage: string,
-    author: string,
-    email: string
+    commitInfo: ICommitBody
   ): Promise<IRecipeLog> {
     const response = await fetch(
-      `/api/recipes/${recipe.recipeId}/logs?commitMessage=${commitMessage}&author=${author}&email=${email}`,
+      `/api/recipes/${recipe.recipeId}/logs?${this.commitInfoToQueryString(
+        commitInfo
+      )}`,
       {
         method: "POST",
         headers: {
@@ -71,12 +71,13 @@ export class RecipeClient {
       }
     );
     if (!response.ok) {
-      throw new Error("Failed to create recipe log: " + (await response.text()));
+      throw new Error(
+        "Failed to create recipe log: " + (await response.text())
+      );
     }
     return response.json();
   }
 
-  
   async getRecipeLog(recipeId: string, logId: string): Promise<IRecipeLog> {
     const response = await fetch(`/api/recipes/${recipeId}/logs/${logId}`);
     if (!response.ok) {
@@ -85,6 +86,26 @@ export class RecipeClient {
       );
     }
     return response.json();
+  }
+
+  async deleteRecipeLog(
+    recipeId: string,
+    logId: string,
+    commitInfo: ICommitBody
+  ): Promise<void> {
+    const response = await fetch(
+      `/api/recipes/${recipeId}/logs/${logId}?${this.commitInfoToQueryString(
+        commitInfo
+      )}`,
+      {
+        method: "DELETE",
+      }
+    );
+    if (!response.ok) {
+      throw new Error(
+        "Failed to delete recipe log: " + (await response.text())
+      );
+    }
   }
 
   async getRecipes(): Promise<IRecipe[]> {
@@ -139,16 +160,20 @@ export interface IRecipeLog {
   commit: ICommit | undefined;
 }
 
+export interface ICommitBody {
+  message: string;
+  name: string;
+}
 
 export interface ICommit {
   author: {
     name: string;
-    email: string;
+    // email: string; // removed, as it the same for all users
     when: string;
   };
   committer: {
     name: string;
-    email: string;
+    // email: string; // removed, as it the same for all users
     when: string;
   };
   message: string;

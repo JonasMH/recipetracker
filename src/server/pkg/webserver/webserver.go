@@ -48,6 +48,7 @@ func New(cfg *config.Config, db *database.RecipeDatabase) *WebServer {
 	server.r.Get("/api/recipes/{recipeId}/logs", server.recipeLogsHandler)
 	server.r.Post("/api/recipes/{recipeId}/logs", server.newRecipeLogHandler)
 	server.r.Get("/api/recipes/{recipeId}/logs/{logId}", server.recipeLogHandler)
+	server.r.Delete("/api/recipes/{recipeId}/logs/{logId}", server.deleteRecipeLogHandler)
 
 	if cfg.Frontend.EnableProxy {
 		slog.Info("Proxying requests to frontend dev server at", "endpoint", "http://localhost:3000")
@@ -148,7 +149,7 @@ func (s *WebServer) newRecipeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := s.db.AddOrUpdateRecipe(recipe, r.URL.Query().Get("commitMessage"), r.URL.Query().Get("author"), r.URL.Query().Get("email"))
+	err := s.db.AddOrUpdateRecipe(recipe, r.URL.Query().Get("commitMessage"), r.URL.Query().Get("author"))
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -209,7 +210,7 @@ func (s *WebServer) newRecipeLogHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	err := s.db.AddRecipeLog(recipe, r.URL.Query().Get("commitMessage"), r.URL.Query().Get("author"), r.URL.Query().Get("email"))
+	err := s.db.AddRecipeLog(recipe, r.URL.Query().Get("commitMessage"), r.URL.Query().Get("author"))
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -219,4 +220,15 @@ func (s *WebServer) newRecipeLogHandler(w http.ResponseWriter, r *http.Request) 
 	if err := json.NewEncoder(w).Encode(recipe); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
+}
+
+func (s *WebServer) deleteRecipeLogHandler(w http.ResponseWriter, r *http.Request) {
+	err := s.db.DeleteRecipeLog(r.PathValue("recipeId"), r.PathValue("logId"), r.URL.Query().Get("commitMessage"), r.URL.Query().Get("author"))
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent) // 204 No Content
+	slog.Info("Deleted recipe log", "recipeId", r.PathValue("recipeId"), "logId", r.PathValue("logId"))
 }

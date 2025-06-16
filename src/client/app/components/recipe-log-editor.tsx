@@ -6,15 +6,9 @@ import { useLocalStorage } from "~/utils";
 export const RecipeLogEditor = (props: { log: IRecipeLog | undefined }) => {
   const orignalId = props.log?.id;
 
-  const [form, setForm] = useState<IRecipeLog>(
-    props.log ?? ({} as IRecipeLog)
-  );
+  const [form, setForm] = useState<IRecipeLog>(props.log ?? ({} as IRecipeLog));
   const [authorName, setAuthorName] = useLocalStorage<string | undefined>(
     "gitName",
-    undefined
-  );
-  const [authorEmail, setAuthorEmail] = useLocalStorage<string | undefined>(
-    "gitEmail",
     undefined
   );
   const [error, setError] = useState<string | undefined>(undefined);
@@ -36,11 +30,6 @@ export const RecipeLogEditor = (props: { log: IRecipeLog | undefined }) => {
       return;
     }
 
-    if ((authorEmail?.length ?? 0) < 5) {
-      setError("Author email must be at least 5 characters long");
-      return;
-    }
-
     if (form.recipeId === undefined) {
       setError("Recipe ID is required");
       return;
@@ -53,11 +42,12 @@ export const RecipeLogEditor = (props: { log: IRecipeLog | undefined }) => {
           ...form,
           id,
         },
-        `Changed log ${id} in recipe ${props.log?.recipeId}`,
-        authorName!,
-        authorEmail!
+        {
+          message: `Changed log ${id} in recipe ${props.log?.recipeId}`,
+          name: authorName!,
+        }
       );
-      navigate(`/recipes/${result.recipeId}/logs`);
+      navigate(`/recipes/${result.recipeId}`);
     } catch (err) {
       setError(err + "");
     }
@@ -164,15 +154,6 @@ export const RecipeLogEditor = (props: { log: IRecipeLog | undefined }) => {
           fullWidth
           margin="normal"
           onChange={(e) => setAuthorName(e.target.value)}
-        ></TextField>
-        <TextField
-          label="Author Email"
-          id="authorEmail"
-          name="authorEmail"
-          value={authorEmail}
-          fullWidth
-          margin="normal"
-          onChange={(e) => setAuthorEmail(e.target.value)}
         ></TextField>
       </Stack>
       <Button

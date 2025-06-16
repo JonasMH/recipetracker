@@ -10,9 +10,10 @@ import (
 )
 
 type GitConfig struct {
-	Repository string `yaml:"repository"`
-	Remote     string `yaml:"remote"`
-	SshKeyPath string `yaml:"sshKeyPath"`
+	Repository  string `yaml:"repository"`
+	Remote      string `yaml:"remote"`
+	SshKeyPath  string `yaml:"sshKeyPath"`
+	CommitEmail string `yaml:"commitEmail"`
 }
 
 type Config struct {

@@ -86,7 +86,7 @@ const RecipeLogsPage = () => {
   return (
     <Stack spacing={2} sx={{ padding: 2 }}>
       <Typography variant="h5" sx={{ mt: 2 }}>
-        Logs for {recipe.title}
+        Logs for <Link href={`/recipes/${recipe.id}`}>{recipe.title}</Link>
       </Typography>
       <RecipeLogs recipeId={recipe.id} />
       <Typography variant="h5" sx={{ mt: 2 }}>

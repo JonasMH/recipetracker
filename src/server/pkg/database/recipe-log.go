@@ -10,8 +10,8 @@ import (
 	"github.com/jonasmh/recipetracker/pkg/models"
 )
 
-func (db *RecipeDatabase) AddRecipeLog(rlog models.RecipeLog, commitMessage, authourName, authorEmail string) error {
-	repo, err := git.PlainOpen(db.root)
+func (db *RecipeDatabase) AddRecipeLog(rlog models.RecipeLog, commitMessage, authourName string) error {
+	repo, err := git.PlainOpen(db.config.Repository)
 	if err != nil {
 		return err
 	}
@@ -47,7 +47,7 @@ func (db *RecipeDatabase) AddRecipeLog(rlog models.RecipeLog, commitMessage, aut
 	if _, err := worktree.Commit(commitMessage, &git.CommitOptions{
 		Author: &object.Signature{
 			Name:  authourName,
-			Email: authorEmail,
+			Email: db.getCommitEmail(),
 			When:  time.Now(),
 		},
 	}); err != nil {
@@ -58,7 +58,7 @@ func (db *RecipeDatabase) AddRecipeLog(rlog models.RecipeLog, commitMessage, aut
 }
 
 func (db *RecipeDatabase) GetRecipeLog(recipeId string, logId string) (*models.RecipeLog, error) {
-	repo, err := git.PlainOpen(db.root)
+	repo, err := git.PlainOpen(db.config.Repository)
 	if err != nil {
 		return nil, err
 	}
@@ -95,7 +95,7 @@ func (db *RecipeDatabase) GetRecipeLog(recipeId string, logId string) (*models.R
 }
 
 func (db *RecipeDatabase) GetRecipeLogs(recipeId string) ([]models.RecipeLog, error) {
-	repo, err := git.PlainOpen(db.root)
+	repo, err := git.PlainOpen(db.config.Repository)
 	if err != nil {
 		return nil, err
 	}
@@ -148,4 +148,41 @@ func (db *RecipeDatabase) GetRecipeLogs(recipeId string) ([]models.RecipeLog, er
 	}
 
 	return rlogs, nil
+}
+
+func (db *RecipeDatabase) DeleteRecipeLog(recipeId string, logId string, commitMessage, authorName string) error {
+	repo, err := git.PlainOpen(db.config.Repository)
+	if err != nil {
+		return err
+	}
+
+	worktree, err := repo.Worktree()
+	if err != nil {
+		return err
+	}
+
+	filePath := recipesPath + recipeId + "/logs/" + logId + ".json"
+	if _, err := worktree.Filesystem.Stat(filePath); os.IsNotExist(err) {
+		return nil // File does not exist, nothing to delete
+	}
+
+	if err := worktree.Filesystem.Remove(filePath); err != nil {
+		return err
+	}
+
+	if _, err := worktree.Add(filePath); err != nil {
+		return err
+	}
+
+	if _, err := worktree.Commit(commitMessage, &git.CommitOptions{
+		Author: &object.Signature{
+			Name:  authorName,
+			Email: db.getCommitEmail(),
+			When:  time.Now(),
+		},
+	}); err != nil {
+		return err
+	}
+
+	return nil
 }

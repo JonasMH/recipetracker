@@ -32,7 +32,7 @@ func convertToCommitModel(commit *object.Commit) models.Commit {
 }
 
 func (db *RecipeDatabase) GetRecipeHistory(id string) (history []models.Commit, err error) {
-	repo, err := git.PlainOpen(db.root)
+	repo, err := git.PlainOpen(db.config.Repository)
 	if err != nil {
 		return nil, err
 	}
@@ -63,7 +63,7 @@ func (db *RecipeDatabase) GetRecipeHistory(id string) (history []models.Commit, 
 }
 
 func (db *RecipeDatabase) GetRecipe(name string) (model models.Recipe, err error) {
-	repo, err := git.PlainOpen(db.root)
+	repo, err := git.PlainOpen(db.config.Repository)
 	if err != nil {
 		return model, err
 	}
@@ -89,7 +89,7 @@ func (db *RecipeDatabase) GetRecipe(name string) (model models.Recipe, err error
 }
 
 func (db *RecipeDatabase) GetRecipes() ([]models.Recipe, error) {
-	repo, err := git.PlainOpen(db.root)
+	repo, err := git.PlainOpen(db.config.Repository)
 	if err != nil {
 		return nil, err
 	}
@@ -137,8 +137,8 @@ func (db *RecipeDatabase) GetRecipes() ([]models.Recipe, error) {
 	return recipes, nil
 }
 
-func (db *RecipeDatabase) AddOrUpdateRecipe(recipe models.Recipe, commitMessage, authourName, authorEmail string) error {
-	repo, err := git.PlainOpen(db.root)
+func (db *RecipeDatabase) AddOrUpdateRecipe(recipe models.Recipe, commitMessage, authourName string) error {
+	repo, err := git.PlainOpen(db.config.Repository)
 	if err != nil {
 		return err
 	}
@@ -173,7 +173,7 @@ func (db *RecipeDatabase) AddOrUpdateRecipe(recipe models.Recipe, commitMessage,
 	if _, err := worktree.Commit(commitMessage, &git.CommitOptions{
 		Author: &object.Signature{
 			Name:  authourName,
-			Email: authorEmail,
+			Email: db.getCommitEmail(),
 			When:  time.Now(),
 		},
 	}); err != nil {

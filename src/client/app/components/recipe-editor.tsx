@@ -15,10 +15,6 @@ const RecipeEditor = (props: { recipe: IRecipe | undefined }) => {
     "gitName",
     undefined
   );
-  const [authorEmail, setAuthorEmail] = useLocalStorage<string | undefined>(
-    "gitEmail",
-    undefined
-  );
   const [error, setError] = useState<string | undefined>(undefined);
   const client = useClient();
   const navigate = useNavigate();
@@ -38,40 +34,36 @@ const RecipeEditor = (props: { recipe: IRecipe | undefined }) => {
       return;
     }
 
-    if ((authorEmail?.length ?? 0) < 5) {
-      setError("Author email must be at least 5 characters long");
-      return;
-    }
-
     try {
       // Convert title to a slug: lowercase, a-z, 0-9, and -
       const slugify = (str: string) =>
         str
           .normalize("NFD") // decompose accents
           .replace(/[\u0300-\u036f]/g, "") // remove accents
-            .toLowerCase()
-            .replace(/[åäàáâãā]/g, "aa")
-            .replace(/[æ]/g, "ae")
-            .replace(/[öòóôõōø]/g, "oe")
-            .replace(/[üúùûū]/g, "u")
-            .replace(/[éèêëē]/g, "e")
-            .replace(/[íìîïī]/g, "i")
-            .replace(/[ç]/g, "c")
-            .replace(/[ñ]/g, "n")
-            .replace(/[^a-z0-9]+/g, "-") // replace non a-z0-9 with -
+          .toLowerCase()
+          .replace(/[åäàáâãā]/g, "aa")
+          .replace(/[æ]/g, "ae")
+          .replace(/[öòóôõōø]/g, "oe")
+          .replace(/[üúùûū]/g, "u")
+          .replace(/[éèêëē]/g, "e")
+          .replace(/[íìîïī]/g, "i")
+          .replace(/[ç]/g, "c")
+          .replace(/[ñ]/g, "n")
+          .replace(/[^a-z0-9]+/g, "-") // replace non a-z0-9 with -
           .replace(/^-+|-+$/g, "") // trim leading/trailing -
           .replace(/--+/g, "-"); // collapse multiple -
 
       const id = orignalId ?? slugify(form.title ?? "");
 
       const result = await client.editRecipe(
-        { 
+        {
           ...form,
           id,
         },
-        `Changed ${id}`,
-        authorName!,
-        authorEmail!
+        {
+          message: `Changed ${id}`,
+          name: authorName!,
+        }
       );
       navigate(`/recipes/${result.id}`);
     } catch (err) {
@@ -190,15 +182,6 @@ const RecipeEditor = (props: { recipe: IRecipe | undefined }) => {
           fullWidth
           margin="normal"
           onChange={(e) => setAuthorName(e.target.value)}
-        ></TextField>
-        <TextField
-          label="Author Email"
-          id="authorEmail"
-          name="authorEmail"
-          value={authorEmail}
-          fullWidth
-          margin="normal"
-          onChange={(e) => setAuthorEmail(e.target.value)}
         ></TextField>
       </Stack>
       <Button

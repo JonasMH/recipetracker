@@ -13,9 +13,7 @@ import (
 )
 
 type RecipeDatabase struct {
-	root       string
-	remote     string
-	sshKeyPath string
+	config config.GitConfig
 }
 
 func New(config config.GitConfig) (*RecipeDatabase, error) {
@@ -67,14 +65,12 @@ func New(config config.GitConfig) (*RecipeDatabase, error) {
 	}
 
 	return &RecipeDatabase{
-		root:       config.Repository,
-		remote:     config.Remote,
-		sshKeyPath: config.SshKeyPath,
+		config: config,
 	}, nil
 }
 
 func (db *RecipeDatabase) Push() error {
-	repo, err := git.PlainOpen(db.root)
+	repo, err := git.PlainOpen(db.config.Repository)
 	if err != nil {
 		return err
 	}
@@ -84,7 +80,7 @@ func (db *RecipeDatabase) Push() error {
 		return err
 	}
 
-	slog.Info("Pushing to remote", "remote", db.remote)
+	slog.Info("Pushing to remote", "remote", db.config.Remote)
 
 	if err := repo.Push(&git.PushOptions{
 		Auth: sshKey,
@@ -96,7 +92,7 @@ func (db *RecipeDatabase) Push() error {
 }
 
 func (db *RecipeDatabase) Pull() error {
-	repo, err := git.PlainOpen(db.root)
+	repo, err := git.PlainOpen(db.config.Repository)
 	if err != nil {
 		return err
 	}
@@ -110,7 +106,7 @@ func (db *RecipeDatabase) Pull() error {
 		return err
 	}
 
-	slog.Info("Pulling from remote", "remote", db.remote)
+	slog.Info("Pulling from remote", "remote", db.config.Remote)
 
 	err = worktree.Pull(&git.PullOptions{
 		Auth: sshKey,
@@ -123,16 +119,24 @@ func (db *RecipeDatabase) Pull() error {
 }
 
 func (db *RecipeDatabase) loadSshkey() (*ssh.PublicKeys, error) {
-	if db.sshKeyPath == "" {
+	if db.config.SshKeyPath == "" {
 		slog.Info("SSH key path not set, not auth")
 		return nil, nil
 	}
-	publicKey, err := ssh.NewPublicKeysFromFile("git", db.sshKeyPath, "")
+	publicKey, err := ssh.NewPublicKeysFromFile("git", db.config.SshKeyPath, "")
 
 	if err != nil {
 		return nil, err
 	}
 
-	slog.Info("Loaded SSH key", "path", db.sshKeyPath)
+	slog.Info("Loaded SSH key", "path", db.config.SshKeyPath)
 	return publicKey, nil
+}
+
+func (db *RecipeDatabase) getCommitEmail() string {
+	if db.config.CommitEmail == "" {
+		return "recipetracker@jonasmhansen.com"
+	}
+
+	return db.config.CommitEmail
 }
