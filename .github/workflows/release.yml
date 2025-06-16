@@ -52,3 +52,13 @@ jobs:
 
       - name: Push Docker image
         run: docker push jonasmh/recipetracker:${{ github.ref_name }}
+
+      - name: Create GitHub Release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref_name }}
+          release_name: Release ${{ github.ref_name }}
+          draft: false
+          prerelease: false
